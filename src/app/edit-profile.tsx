@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { Buffer } from "buffer";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
@@ -27,7 +26,6 @@ export default function EditProfile() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // ─── Load profile from Supabase on mount ─────────────────────────────────
   useEffect(() => {
     const loadProfile = async () => {
       const {
@@ -45,7 +43,6 @@ export default function EditProfile() {
 
       if (error) {
         console.log("Error loading profile:", error.message);
-        // If no profile row exists yet, create one
         if (error.code === "PGRST116") {
           await supabase.from("profiles").insert({ id: user.id });
         }
@@ -57,7 +54,6 @@ export default function EditProfile() {
         setUsername(data.username ?? "");
         setOriginalUsername(data.username ?? "");
         if (data.avatar_url) {
-          // Add cache-busting so image always reloads fresh from Supabase
           setImage(data.avatar_url + "?t=" + Date.now());
         }
       }
@@ -66,62 +62,71 @@ export default function EditProfile() {
     loadProfile();
   }, []);
 
-  // ─── Pick image from gallery ──────────────────────────────────────────────
- const pickImage = async () => {
-  if (Platform.OS !== "web") {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permission needed", "Please allow access to your photos.");
-      return;
+  const pickImage = async () => {
+    if (Platform.OS !== "web") {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission needed", "Please allow access to your photos.");
+        return;
+      }
     }
-  }
 
-  const result = await ImagePicker.launchImageLibraryAsync({
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0.7,
-  });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
 
-  if (!result.canceled) {
-    setImage(result.assets[0].uri);
-  }
-};
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
 
-  // ─── Upload image to Supabase Storage ────────────────────────────────────
-  // Uses fetch + blob — works in React Native (no atob needed)
   const uploadImageToSupabase = async (
     localUri: string,
     uid: string,
   ): Promise<string | null> => {
     try {
-      // Determine file extension
       const uriParts = localUri.split(".");
       const ext = uriParts[uriParts.length - 1]?.toLowerCase() ?? "jpg";
       const mimeType = ext === "png" ? "image/png" : "image/jpeg";
-      // Store per-user, overwrite on each update
       const filePath = `${uid}/avatar.${ext}`;
 
-      // Read as base64 via expo-file-system (works on device & simulator)
-      const base64 = await FileSystem.readAsStringAsync(localUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      if (Platform.OS === "web") {
+        const response = await fetch(localUri);
+        const blob = await response.blob();
 
-      // Convert base64 string → Uint8Array without atob (atob breaks in RN)
-      const binary = Buffer.from(base64, "base64");
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, blob, {
+            contentType: mimeType,
+            upsert: true,
+          });
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, binary, {
-          contentType: mimeType,
-          upsert: true, // overwrite previous avatar
+        if (uploadError) {
+          console.log("Upload error:", uploadError.message);
+          return null;
+        }
+      } else {
+        const base64 = await FileSystem.readAsStringAsync(localUri, {
+          encoding: FileSystem.EncodingType.Base64,
         });
 
-      if (uploadError) {
-        console.log("Upload error:", uploadError.message);
-        return null;
+        const binary = Buffer.from(base64, "base64");
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, binary, {
+            contentType: mimeType,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.log("Upload error:", uploadError.message);
+          return null;
+        }
       }
 
-      // Return the permanent public URL
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
       return data.publicUrl ?? null;
     } catch (err) {
@@ -130,7 +135,6 @@ export default function EditProfile() {
     }
   };
 
-  // ─── Delete photo ─────────────────────────────────────────────────────────
   const deletePhoto = async () => {
     if (!userId) return;
     setLoading(true);
@@ -144,7 +148,13 @@ export default function EditProfile() {
         .eq("id", userId);
 
       if (error) console.log("Delete photo error:", error.message);
-      else Alert.alert("Done", "Profile photo removed.");
+      else {
+        if (Platform.OS === "web") {
+          window.alert("Profile photo removed.");
+        } else {
+          Alert.alert("Done", "Profile photo removed.");
+        }
+      }
     } catch (error) {
       console.log("deletePhoto error:", error);
     } finally {
@@ -152,20 +162,21 @@ export default function EditProfile() {
     }
   };
 
-  // ─── Photo options alert ──────────────────────────────────────────────────
   const showPhotoOptions = () => {
-    Alert.alert("Profile Photo", "Choose an option", [
-      { text: "Change Photo", onPress: pickImage },
-      { text: "Delete Photo", onPress: deletePhoto, style: "destructive" },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    if (Platform.OS === "web") {
+      pickImage();
+    } else {
+      Alert.alert("Profile Photo", "Choose an option", [
+        { text: "Change Photo", onPress: pickImage },
+        { text: "Delete Photo", onPress: deletePhoto, style: "destructive" },
+        { text: "Cancel", style: "cancel" },
+      ]);
+    }
   };
 
-  // ─── Check username availability ──────────────────────────────────────────
   const isUsernameAvailable = async (newUsername: string): Promise<boolean> => {
     if (!newUsername.trim()) return false;
 
-    // User is keeping the same username — always fine
     if (
       newUsername.trim().toLowerCase() === originalUsername.trim().toLowerCase()
     ) {
@@ -183,13 +194,16 @@ export default function EditProfile() {
       return false;
     }
 
-    return data === null; // null = no one has this username → available
+    return data === null;
   };
 
-  // ─── Save profile ─────────────────────────────────────────────────────────
   const saveProfile = async () => {
     if (!userId) {
-      Alert.alert("Error", "Not logged in.");
+      if (Platform.OS === "web") {
+        window.alert("Not logged in.");
+      } else {
+        Alert.alert("Error", "Not logged in.");
+      }
       return;
     }
 
@@ -197,52 +211,67 @@ export default function EditProfile() {
     const trimmedName = name.trim();
 
     if (!trimmedName) {
-      Alert.alert("Validation", "Full name cannot be empty.");
+      if (Platform.OS === "web") {
+        window.alert("Full name cannot be empty.");
+      } else {
+        Alert.alert("Validation", "Full name cannot be empty.");
+      }
       return;
     }
     if (!trimmedUsername) {
-      Alert.alert("Validation", "Username cannot be empty.");
+      if (Platform.OS === "web") {
+        window.alert("Username cannot be empty.");
+      } else {
+        Alert.alert("Validation", "Username cannot be empty.");
+      }
       return;
     }
-    // Basic username format check
+    if (trimmedUsername.length < 3) {
+      if (Platform.OS === "web") {
+        window.alert("Username must be at least 3 characters.");
+      } else {
+        Alert.alert("Invalid Username", "Username must be at least 3 characters.");
+      }
+      return;
+    }
     if (!/^[a-z0-9._]+$/.test(trimmedUsername)) {
-      Alert.alert(
-        "Invalid Username",
-        "Username can only contain letters, numbers, dots, and underscores.",
-      );
+      if (Platform.OS === "web") {
+        window.alert("Username can only contain letters, numbers, dots, and underscores.");
+      } else {
+        Alert.alert("Invalid Username", "Username can only contain letters, numbers, dots, and underscores.");
+      }
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1. Check username is available
       const available = await isUsernameAvailable(trimmedUsername);
       if (!available) {
-        Alert.alert(
-          "Username Taken",
-          `"${trimmedUsername}" is already taken. Please choose another.`,
-        );
+        if (Platform.OS === "web") {
+          window.alert(`"${trimmedUsername}" is already taken. Please choose another.`);
+        } else {
+          Alert.alert("Username Taken", `"${trimmedUsername}" is already taken.`);
+        }
         setLoading(false);
         return;
       }
 
-      // 2. Upload avatar if a new local image was picked
       let avatarUrl: string | null = null;
-      if (image && image.startsWith("file://")) {
+      if (image && (image.startsWith("file://") || image.startsWith("blob:"))) {
         avatarUrl = await uploadImageToSupabase(image, userId);
         if (!avatarUrl) {
-          Alert.alert(
-            "Upload Failed",
-            "Could not upload profile photo. Check your internet and try again.",
-          );
+          if (Platform.OS === "web") {
+            window.alert("Could not upload profile photo. Check your internet and try again.");
+          } else {
+            Alert.alert("Upload Failed", "Could not upload profile photo.");
+          }
           setLoading(false);
           return;
         }
-        setImage(avatarUrl + "?t=" + Date.now()); // update state with permanent URL
+        setImage(avatarUrl + "?t=" + Date.now());
       }
 
-      // 3. Build update object
       const updatePayload: Record<string, string | null> = {
         full_name: trimmedName,
         username: trimmedUsername,
@@ -252,47 +281,64 @@ export default function EditProfile() {
         updatePayload.avatar_url = avatarUrl;
       }
 
-      // 4. Save to Supabase profiles table
       const { error: updateError } = await supabase
         .from("profiles")
         .update(updatePayload)
         .eq("id", userId);
 
       if (updateError) {
-        console.log("Profile update error:", updateError.message);
-        Alert.alert("Error", "Failed to save profile: " + updateError.message);
+        console.log("Profile update error:", updateError.message, updateError.code);
+        if (updateError.code === "23505") {
+          if (Platform.OS === "web") {
+            window.alert(`"${trimmedUsername}" was just taken. Please choose another.`);
+          } else {
+            Alert.alert("Username Taken", `"${trimmedUsername}" was just taken.`);
+          }
+        } else {
+          if (Platform.OS === "web") {
+            window.alert("Failed to save profile: " + updateError.message);
+          } else {
+            Alert.alert("Error", "Failed to save profile: " + updateError.message);
+          }
+        }
         return;
       }
 
-      // 5. Lock in new username as "original" so re-saves don't block
       setOriginalUsername(trimmedUsername);
+      setUsername(trimmedUsername);
 
-      // 6. Cache locally for quick reads elsewhere in the app
       await AsyncStorage.setItem("name", trimmedName);
       await AsyncStorage.setItem("username", trimmedUsername);
       if (avatarUrl) {
         await AsyncStorage.setItem("profileImage", avatarUrl);
       }
 
-      Alert.alert("Success", "Profile saved!", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      if (Platform.OS === "web") {
+        window.alert("Profile saved!");
+        router.back();
+      } else {
+        Alert.alert("Success", "Profile saved!", [
+          { text: "OK", onPress: () => router.back() },
+        ]);
+      }
     } catch (error) {
       console.log("saveProfile error:", error);
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      if (Platform.OS === "web") {
+        window.alert("Something went wrong. Please try again.");
+      } else {
+        Alert.alert("Error", "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backText}>←</Text>
+        <Text style={styles.backText}>{"<"}</Text>
       </TouchableOpacity>
 
-      {/* Avatar tap → photo options */}
       <TouchableOpacity onPress={showPhotoOptions} activeOpacity={0.8}>
         {image ? (
           <Image source={{ uri: image }} style={styles.avatar} />

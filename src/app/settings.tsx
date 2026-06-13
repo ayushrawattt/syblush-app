@@ -1,14 +1,26 @@
 import { router } from "expo-router";
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { supabase } from "../lib/supabase";
 
 export default function Settings() {
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
+    }
+
+    router.replace("/login");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity
   style={styles.backButton}
   onPress={() => router.back()}
 >
-  <Text style={styles.backText}>←</Text>
+  <Text style={styles.backText}>{"<"}</Text>
 </TouchableOpacity>
       <Text style={styles.title}>Settings</Text>
 
@@ -17,7 +29,7 @@ export default function Settings() {
         <Text style={styles.optionValue}>ayush@example.com</Text>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </SafeAreaView>
