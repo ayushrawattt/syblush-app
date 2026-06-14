@@ -46,22 +46,29 @@ export default function CreatePost() {
       if (userError || !userData?.user) throw new Error("User not logged in");
 
       const userId = userData.user.id;
-      const response = await fetch(image);
-      const arrayBuffer = await response.arrayBuffer();
-      console.log("3. Image fetched, size:", arrayBuffer.byteLength);
 
-      const fileExt = image.split(".").pop() || "jpg";
+      const response = await fetch(image);
+      const blob = await response.blob();
+      console.log("3. Image fetched, size:", blob.size, "type:", blob.type);
+
+      const mimeType = blob.type || "image/jpeg";
+      const fileExt = mimeType.split("/")[1] || "jpg";
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
       console.log("4. Uploading to storage:", fileName);
 
       const { error: uploadError } = await supabase.storage
         .from("posts")
-        .upload(fileName, arrayBuffer, { contentType: `image/${fileExt}` });
+        .upload(fileName, blob, {
+          contentType: mimeType,
+          upsert: false,
+        });
 
       console.log("5. Upload error:", uploadError);
       if (uploadError) throw uploadError;
 
-      const { data: publicUrlData } = supabase.storage.from("posts").getPublicUrl(fileName);
+      const { data: publicUrlData } = supabase.storage
+        .from("posts")
+        .getPublicUrl(fileName);
       console.log("6. Public URL:", publicUrlData.publicUrl);
 
       const { error: insertError } = await supabase.from("posts").insert({
@@ -76,7 +83,7 @@ export default function CreatePost() {
       Alert.alert("Success", "Post uploaded!");
       setImage(null);
       setCaption("");
-      router.push("/");
+      router.replace("/explore"); // ✅ Yahan fix kiya
     } catch (error: any) {
       console.log("CAUGHT ERROR:", error.message);
       Alert.alert("Error", error.message);

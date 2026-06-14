@@ -3,17 +3,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
+  Image,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
 
 export default function Explore() {
   const [profileImage, setProfileImage] = useState(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -26,23 +31,73 @@ export default function Explore() {
         } = await supabase.auth.getUser();
 
         if (user) {
+          // Notifications count
           const { count } = await supabase
             .from("notifications")
             .select("*", { count: "exact", head: true })
             .eq("user_id", user.id)
             .eq("read", false);
-
           setUnreadNotifications(count ?? 0);
+
+          // ✅ Posts fetch - profiles join hataya
+          const { data: postsData, error } = await supabase
+            .from("posts")
+            .select("id, image_url, caption, created_at, user_id")
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            console.log("Posts fetch error:", error.message);
+          } else {
+            // ✅ Har post ke liye profile alag fetch karo
+            const postsWithProfiles = await Promise.all(
+              (postsData || []).map(async (post) => {
+                const { data: profile } = await supabase
+                  .from("profiles")
+                  .select("username, avatar_url")
+                  .eq("id", post.user_id)
+                  .single();
+                return { ...post, profiles: profile };
+              })
+            );
+            setPosts(postsWithProfiles);
+          }
         }
+
+        setLoading(false);
       };
 
       loadData();
     }, []),
   );
 
+  const renderPost = ({ item }: any) => (
+    <View style={styles.postCard}>
+      <View style={styles.postHeader}>
+        <View style={styles.avatar}>
+          {item.profiles?.avatar_url ? (
+            <Image source={{ uri: item.profiles.avatar_url }} style={styles.avatarImg} />
+          ) : (
+            <Ionicons name="person" size={18} color="#888" />
+          )}
+        </View>
+        <Text style={styles.username}>
+          {item.profiles?.username || "User"}
+        </Text>
+      </View>
+
+      <Image source={{ uri: item.image_url }} style={styles.postImage} />
+
+      {item.caption ? (
+        <Text style={styles.caption}>
+          <Text style={styles.username}>{item.profiles?.username || "User"} </Text>
+          {item.caption}
+        </Text>
+      ) : null}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top row: Search + Post + Notifications + Messages */}
       <View style={styles.topRow}>
         <TouchableOpacity
           style={styles.searchBar}
@@ -84,6 +139,21 @@ export default function Explore() {
           <Ionicons name="chatbubble-outline" size={19} color="#fff" />
         </TouchableOpacity>
       </View>
+
+      {loading ? (
+        <ActivityIndicator color="#fff" style={{ marginTop: 40 }} />
+      ) : posts.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No posts yet</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={renderPost}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -93,17 +163,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000",
     paddingTop: 50,
-    paddingHorizontal: 16,
   },
-
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
     marginBottom: 20,
+    paddingHorizontal: 16,
   },
-
   searchBar: {
     width: 200,
     flexDirection: "row",
@@ -115,12 +183,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#222",
   },
-
   searchPlaceholder: {
     color: "#666",
     fontSize: 13,
   },
-
   iconButton: {
     width: 40,
     height: 40,
@@ -131,7 +197,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   badge: {
     position: "absolute",
     top: -2,
@@ -146,10 +211,58 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#000",
   },
-
   badgeText: {
     color: "#fff",
     fontSize: 10,
     fontWeight: "bold",
+  },
+  postCard: {
+    marginBottom: 24,
+  },
+  postHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#222",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  avatarImg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  username: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  postImage: {
+    width: "100%",
+    aspectRatio: 1,
+    backgroundColor: "#111",
+  },
+  caption: {
+    color: "#ccc",
+    fontSize: 13,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "#555",
+    fontSize: 16,
   },
 });

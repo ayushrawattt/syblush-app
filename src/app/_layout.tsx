@@ -1,11 +1,48 @@
-import { Stack, usePathname } from "expo-router";
-import { Platform } from "react-native";
+import { Stack, usePathname, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Platform, View } from "react-native";
 import AppTabs from "../components/app-tabs.web";
+import { supabase } from "../lib/supabase";
 
 export default function Layout() {
   const pathname = usePathname();
-  
-  const hideNav = ["/login", "/signup", "/", ""].includes(pathname);
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Session check karo
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace("/");
+      }
+      setLoading(false);
+    });
+
+    // Auth state changes suno
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.replace("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const hideNav =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/" ||
+    pathname === "" ||
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/messages");
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <>

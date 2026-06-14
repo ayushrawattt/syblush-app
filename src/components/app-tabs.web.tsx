@@ -5,6 +5,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 export default function AppTabs() {
   const pathname = usePathname();
 
+  if (!pathname.match(/^\/(explore|membership|profile)$/)) return null;
+
   const tabs = [
     {
       name: "Home",
