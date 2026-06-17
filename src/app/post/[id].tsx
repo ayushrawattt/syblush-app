@@ -30,6 +30,9 @@ export default function PostDetail() {
   const [commentText, setCommentText] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reposted, setReposted] = useState(false);
+  const [repostsCount, setRepostsCount] = useState(0);
+  const [showRepostModal, setShowRepostModal] = useState(false);
 
   useEffect(() => {
     loadPost();
@@ -39,7 +42,6 @@ export default function PostDetail() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) setCurrentUserId(user.id);
 
-    // Post fetch karo
     const { data: postData } = await supabase
       .from("posts")
       .select("id, image_url, caption, user_id, created_at")
@@ -47,7 +49,6 @@ export default function PostDetail() {
       .single();
 
     if (postData) {
-      // Profile fetch karo
       const { data: profile } = await supabase
         .from("profiles")
         .select("username, avatar_url")
@@ -56,14 +57,12 @@ export default function PostDetail() {
 
       setPost({ ...postData, profiles: profile });
 
-      // Likes fetch karo
       const { count: likesCount } = await supabase
         .from("likes")
         .select("*", { count: "exact", head: true })
         .eq("post_id", id);
       setLikesCount(likesCount ?? 0);
 
-      // Check karo user ne like kiya hai ya nahi
       if (user) {
         const { data: likeData } = await supabase
           .from("likes")
@@ -72,9 +71,24 @@ export default function PostDetail() {
           .eq("user_id", user.id)
           .single();
         setLiked(!!likeData);
+
+        // Check repost status
+        const { data: repostData } = await supabase
+          .from("reposts")
+          .select("id")
+          .eq("post_id", id)
+          .eq("user_id", user.id)
+          .single();
+        setReposted(!!repostData);
       }
 
-      // Comments fetch karo
+      // Reposts count
+      const { count: rCount } = await supabase
+        .from("reposts")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", id);
+      setRepostsCount(rCount ?? 0);
+
       await loadComments();
     }
 
@@ -116,6 +130,26 @@ export default function PostDetail() {
       setLiked(true);
       setLikesCount((prev) => prev + 1);
     }
+  };
+
+  const toggleRepost = async () => {
+    if (!currentUserId) return;
+
+    if (reposted) {
+      await supabase.from("reposts").delete()
+        .eq("post_id", id).eq("user_id", currentUserId);
+      setReposted(false);
+      setRepostsCount((prev) => prev - 1);
+    } else {
+      await supabase.from("reposts").insert({
+        post_id: id,
+        user_id: currentUserId,
+        original_user_id: post?.user_id,
+      });
+      setReposted(true);
+      setRepostsCount((prev) => prev + 1);
+    }
+    setShowRepostModal(false);
   };
 
   const addComment = async () => {
@@ -171,13 +205,14 @@ export default function PostDetail() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <>
-              {/* Post image */}
+              {/* Post image — fixed size */}
               <Image
                 source={{ uri: post?.image_url }}
                 style={styles.postImage}
+                resizeMode="cover"
               />
 
-              {/* Like + Comment buttons */}
+              {/* Like + Comment + Repost buttons */}
               <View style={styles.actions}>
                 <TouchableOpacity style={styles.actionBtn} onPress={toggleLike}>
                   <Ionicons
@@ -187,9 +222,25 @@ export default function PostDetail() {
                   />
                   <Text style={styles.actionCount}>{likesCount}</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity style={styles.actionBtn}>
                   <Ionicons name="chatbubble-outline" size={24} color="#fff" />
                   <Text style={styles.actionCount}>{comments.length}</Text>
+                </TouchableOpacity>
+
+                {/* Repost Button */}
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => setShowRepostModal(true)}
+                >
+                  <Ionicons
+                    name="repeat-outline"
+                    size={26}
+                    color={reposted ? "#00c853" : "#fff"}
+                  />
+                  <Text style={[styles.actionCount, reposted && { color: "#00c853" }]}>
+                    {repostsCount}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -234,6 +285,39 @@ export default function PostDetail() {
         </View>
       </KeyboardAvoidingView>
 
+      {/* Repost Confirm Modal */}
+      <Modal visible={showRepostModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Ionicons
+              name="repeat-outline"
+              size={36}
+              color={reposted ? "#ff3b30" : "#00c853"}
+              style={{ marginBottom: 12 }}
+            />
+            <Text style={styles.modalTitle}>
+              {reposted ? "Remove Repost?" : "Repost?"}
+            </Text>
+            <Text style={styles.modalText}>
+              {reposted
+                ? "This will be removed from your reposts."
+                : "This will appear on your profile under Reposts."}
+            </Text>
+            <TouchableOpacity
+              style={[styles.repostBtn, reposted && { backgroundColor: "#ff3b30" }]}
+              onPress={toggleRepost}
+            >
+              <Text style={styles.repostBtnText}>
+                {reposted ? "Remove" : "Repost"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowRepostModal(false)}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Delete Modal */}
       <Modal visible={showDeleteModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -273,16 +357,19 @@ const styles = StyleSheet.create({
     borderBottomColor: "#222",
   },
   headerTitle: { color: "#fff", fontSize: 16, fontWeight: "600" },
+
+  // ✅ Fixed: image is now 60% of screen width (square crop feel, not full screen)
   postImage: {
     width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 0.6,
     backgroundColor: "#111",
   },
+
   actions: {
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    gap: 16,
+    gap: 20,
   },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
   actionCount: { color: "#fff", fontSize: 14 },
@@ -333,6 +420,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", marginBottom: 8 },
   modalText: { color: "#888", fontSize: 14, textAlign: "center", marginBottom: 20 },
+  repostBtn: {
+    backgroundColor: "#00c853",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  repostBtnText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   deleteBtn: {
     backgroundColor: "#ff3b30",
     paddingVertical: 12,
