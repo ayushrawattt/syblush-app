@@ -5,11 +5,12 @@ const supabaseUrl = "https://wekcyqtvnlgojcjtazow.supabase.co";
 const supabaseAnonKey = "sb_publishable_iQtyoBOSbH9vy7bbCTNwGw_SMmqp772";
 
 const getStorage = () => {
+  if (typeof window === "undefined") return undefined;
   if (Platform.OS === "web") {
-    return localStorage; // Web ke liye
+    return localStorage;
   }
   const AsyncStorage = require("@react-native-async-storage/async-storage").default;
-  return AsyncStorage; // Mobile ke liye
+  return AsyncStorage;
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
