@@ -1,5 +1,5 @@
 import { Stack, usePathname, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import AppTabs from "../components/app-tabs.web";
 import { supabase } from "../lib/supabase";
@@ -8,21 +8,14 @@ export default function Layout() {
   const pathname = usePathname();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const checked = useRef(false);
 
   useEffect(() => {
-    if (checked.current) return;
-    checked.current = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session && pathname !== "/" && pathname !== "") {
         router.replace("/");
       }
       setLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace("/");
-    });
-    return () => subscription.unsubscribe();
   }, []);
 
   const hideNav =
