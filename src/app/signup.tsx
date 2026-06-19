@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   SafeAreaView,
@@ -10,77 +11,156 @@ import {
 import { supabase } from "../lib/supabase";
 
 export default function Signup() {
-  const [name, setName] = useState("");
+  const [step, setStep] = useState(1);
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
-    console.log("SIGNUP STARTED");
-
-    if (!email || !password) {
-      alert("Email aur Password bharo");
+  const handleNextStep = async () => {
+    if (!username.trim()) {
+      alert("Please enter a username");
       return;
     }
 
+    setLoading(true);
+
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("username", username.toLowerCase().trim())
+      .single();
+
+    setLoading(false);
+
+    if (existing) {
+      alert("This username is already taken. Please try another.");
+      return;
+    }
+
+    setStep(2);
+  };
+
+  const handleSignup = async () => {
+    if (!email || !password) {
+      alert("Please enter email and password");
+      return;
+    }
+
+    setLoading(true);
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanUsername = username.toLowerCase().trim();
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
       options: {
         data: {
-          full_name: name,
+          username: cleanUsername,
         },
       },
     });
 
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
-
     if (error) {
+      setLoading(false);
       alert(error.message);
-    } else {
-      alert("Account Created Successfully");
+      return;
     }
+
+    if (data.user) {
+      await supabase
+        .from("profiles")
+        .update({ email: cleanEmail })
+        .eq("id", data.user.id);
+    }
+
+    setLoading(false);
+    alert("Account created! Please login.");
+    router.replace("/login");
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.formContainer}>
+
         <Text style={styles.logo}>SYBLUSH</Text>
 
-        <Text style={styles.heading}>Create Account</Text>
+        {step === 1 ? (
+          <>
+            <Text style={styles.heading}>Choose a Username</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          placeholderTextColor="#666"
-          value={name}
-          onChangeText={setName}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+              autoFocus
+              value={username}
+              onChangeText={setUsername}
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#666"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleNextStep}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? "Checking..." : "Next →"}
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.heading}>Create Account</Text>
+            <Text style={styles.subheading}>@{username}</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#666"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoFocus
+              value={email}
+              onChangeText={setEmail}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#666"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleSignup}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? "Creating..." : "Create Account"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setStep(1)} style={styles.backRow}>
+              <Text style={styles.backText}>← Back</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <TouchableOpacity
-          style={styles.button}
-          onPress={handleSignup}
+          onPress={() => router.push("/login")}
+          style={styles.linkRow}
         >
-          <Text style={styles.buttonText}>Create Account</Text>
+          <Text style={styles.linkText}>
+            Already have an account?{" "}
+            <Text style={styles.linkBold}>Login</Text>
+          </Text>
         </TouchableOpacity>
+
       </View>
     </SafeAreaView>
   );
@@ -94,27 +174,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
-
   formContainer: {
     width: "100%",
     maxWidth: 380,
   },
-
   logo: {
     color: "#fff",
     fontSize: 40,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 30,
+    letterSpacing: 4,
   },
-
   heading: {
     color: "#fff",
     fontSize: 22,
+    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 24,
   },
-
+  subheading: {
+    color: "#666",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 24,
+  },
   input: {
     backgroundColor: "#111",
     color: "#fff",
@@ -125,7 +209,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#222",
   },
-
   button: {
     backgroundColor: "#fff",
     padding: 16,
@@ -133,10 +216,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-
+  buttonDisabled: {
+    backgroundColor: "#444",
+  },
   buttonText: {
     color: "#000",
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  backRow: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  backText: {
+    color: "#666",
+    fontSize: 14,
+  },
+  linkRow: {
+    marginTop: 24,
+    alignItems: "center",
+  },
+  linkText: {
+    color: "#666",
+    fontSize: 14,
+  },
+  linkBold: {
+    color: "#fff",
     fontWeight: "bold",
   },
 });
