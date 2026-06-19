@@ -61,7 +61,7 @@ export default function Signup() {
         .eq("id", data.user.id);
     }
     setLoading(false);
-    alert("Account created! Please login.");
+    alert("Account created successfully! Please login.");
     router.replace("/login");
   };
 

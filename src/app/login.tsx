@@ -25,7 +25,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!identifier || !password) {
-      alert("Email/Username aur Password bharo");
+      alert("Please enter email/username and password");
       return;
     }
 
@@ -39,7 +39,7 @@ export default function Login() {
         .single();
 
       if (profileError || !profile) {
-        alert("Username nahi mila. Please check karo.");
+        alert("Username not found. Please check and try again.");
         return;
       }
       loginEmail = profile.email;
@@ -70,7 +70,6 @@ export default function Login() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.formContainer}>
-
         <Text style={styles.logo}>SYBLUSH</Text>
         <Text style={styles.heading}>Login</Text>
 
@@ -113,7 +112,6 @@ export default function Login() {
             <Text style={styles.linkBold}>Create Account</Text>
           </Text>
         </TouchableOpacity>
-
       </View>
     </SafeAreaView>
   );
