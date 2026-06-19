@@ -56,7 +56,7 @@ export default function Explore() {
               (postsData || []).map(async (post) => {
                 const { data: profile } = await supabase
                   .from("profiles")
-                  .select("username, avatar_url")
+                  .select("full_name, username, avatar_url")
                   .eq("id", post.user_id)
                   .single();
                 return { ...post, profiles: profile };
@@ -88,14 +88,22 @@ export default function Explore() {
             <Ionicons name="person" size={16} color="#666" />
           )}
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.username}>{item.profiles?.username || "User"}</Text>
+
+        <View style={styles.headerTextCol}>
+          <View style={styles.nameRow}>
+            <Text style={styles.fullName} numberOfLines={1}>
+              {item.profiles?.full_name || item.profiles?.username || "User"}
+            </Text>
+            <Text style={styles.handle} numberOfLines={1}>
+              @{item.profiles?.username || "user"}
+            </Text>
+          </View>
+
+          {item.caption ? (
+            <Text style={styles.caption}>{item.caption}</Text>
+          ) : null}
         </View>
       </View>
-
-      {item.caption ? (
-        <Text style={styles.caption}>{item.caption}</Text>
-      ) : null}
 
       <View style={styles.imageWrapper}>
         <Image
@@ -282,9 +290,9 @@ const styles = StyleSheet.create({
   },
   postHeader: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingBottom: 6,
-    gap: 8,
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 10,
   },
   avatar: {
     width: 34,
@@ -300,16 +308,30 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
   },
-  username: {
+  headerTextCol: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 4,
+  },
+  fullName: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 14,
+    flexShrink: 1,
+  },
+  handle: {
+    color: "#777",
+    fontSize: 13,
+    flexShrink: 1,
   },
   caption: {
     color: "#eee",
     fontSize: 15,
     lineHeight: 20,
-    marginBottom: 12,
   },
   imageWrapper: {
     width: "100%",
