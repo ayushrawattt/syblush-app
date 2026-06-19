@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
   SafeAreaView,
@@ -13,6 +14,14 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const CARD_PADDING = 14;
+const AVATAR_SIZE = 34;
+const HEADER_GAP = 10;
+const IMAGE_LEFT_INSET = AVATAR_SIZE + HEADER_GAP; // align image with caption text, not avatar
+const POST_IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2 - IMAGE_LEFT_INSET;
+const POST_IMAGE_HEIGHT = Math.min(POST_IMAGE_WIDTH, 300);
 
 export default function Explore() {
   const [profileImage, setProfileImage] = useState(null);
@@ -281,7 +290,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   postCard: {
-    paddingHorizontal: 14,
+    paddingHorizontal: CARD_PADDING,
     paddingTop: 12,
     paddingBottom: 14,
     marginBottom: 6,
@@ -291,22 +300,22 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
+    gap: HEADER_GAP,
     marginBottom: 10,
   },
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
   avatarImg: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
   },
   headerTextCol: {
     flex: 1,
@@ -334,21 +343,25 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   imageWrapper: {
-    width: "100%",
-    maxHeight: 320,
-    borderRadius: 14,
+    width: POST_IMAGE_WIDTH,
+    height: POST_IMAGE_HEIGHT,
+    marginLeft: IMAGE_LEFT_INSET,
+    borderRadius: 16,
     overflow: "hidden",
     backgroundColor: "#0d0d0d",
+    borderWidth: 1,
+    borderColor: "#262626",
   },
   postImage: {
     width: "100%",
-    height: 260,
+    height: "100%",
   },
   actionRow: {
     flexDirection: "row",
     justifyContent: "flex-start",
     gap: 26,
     marginTop: 10,
+    marginLeft: IMAGE_LEFT_INSET,
   },
   actionItem: {
     padding: 2,
