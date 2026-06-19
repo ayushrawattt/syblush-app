@@ -30,6 +30,7 @@ export default function Explore() {
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -40,6 +41,8 @@ export default function Explore() {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
+          setCurrentUserId(user.id);
+
           const { count } = await supabase
             .from("notifications")
             .select("*", { count: "exact", head: true })
@@ -61,17 +64,49 @@ export default function Explore() {
           if (error) {
             console.log("Posts fetch error:", error.message);
           } else {
-            const postsWithProfiles = await Promise.all(
+            const postsWithExtras = await Promise.all(
               (postsData || []).map(async (post) => {
                 const { data: profile } = await supabase
                   .from("profiles")
                   .select("full_name, username, avatar_url")
                   .eq("id", post.user_id)
                   .single();
-                return { ...post, profiles: profile };
+
+                const { count: likeCount } = await supabase
+                  .from("likes")
+                  .select("*", { count: "exact", head: true })
+                  .eq("post_id", post.id);
+
+                const { data: myLike } = await supabase
+                  .from("likes")
+                  .select("id")
+                  .eq("post_id", post.id)
+                  .eq("user_id", user.id)
+                  .maybeSingle();
+
+                const { count: repostCount } = await supabase
+                  .from("reposts")
+                  .select("*", { count: "exact", head: true })
+                  .eq("post_id", post.id);
+
+                const { data: myRepost } = await supabase
+                  .from("reposts")
+                  .select("id")
+                  .eq("post_id", post.id)
+                  .eq("user_id", user.id)
+                  .maybeSingle();
+
+                return {
+                  ...post,
+                  profiles: profile,
+                  likeCount: likeCount ?? 0,
+                  likedByMe: !!myLike,
+                  repostCount: repostCount ?? 0,
+                  repostedByMe: !!myRepost,
+                };
               })
             );
-            setPosts(postsWithProfiles);
+            setPosts(postsWithExtras);
           }
         }
 
@@ -86,6 +121,120 @@ export default function Explore() {
     activeTab === "following"
       ? posts.filter((p: any) => followingIds.includes(p.user_id))
       : posts;
+
+  const toggleLike = async (postId: string) => {
+    if (!currentUserId) return;
+
+    const target = posts.find((p: any) => p.id === postId) as any;
+    if (!target) return;
+
+    const wasLiked = target.likedByMe;
+
+    // Update UI immediately (optimistic update)
+    setPosts((prev: any) =>
+      prev.map((p: any) =>
+        p.id === postId
+          ? {
+              ...p,
+              likedByMe: !wasLiked,
+              likeCount: wasLiked ? p.likeCount - 1 : p.likeCount + 1,
+            }
+          : p
+      )
+    );
+
+    if (wasLiked) {
+      const { error } = await supabase
+        .from("likes")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", currentUserId);
+
+      if (error) {
+        console.log("Unlike error:", error.message);
+        // revert on failure
+        setPosts((prev: any) =>
+          prev.map((p: any) =>
+            p.id === postId
+              ? { ...p, likedByMe: true, likeCount: p.likeCount + 1 }
+              : p
+          )
+        );
+      }
+    } else {
+      const { error } = await supabase
+        .from("likes")
+        .insert({ post_id: postId, user_id: currentUserId });
+
+      if (error) {
+        console.log("Like error:", error.message);
+        // revert on failure
+        setPosts((prev: any) =>
+          prev.map((p: any) =>
+            p.id === postId
+              ? { ...p, likedByMe: false, likeCount: p.likeCount - 1 }
+              : p
+          )
+        );
+      }
+    }
+  };
+
+  const toggleRepost = async (postId: string) => {
+    if (!currentUserId) return;
+
+    const target = posts.find((p: any) => p.id === postId) as any;
+    if (!target) return;
+
+    const wasReposted = target.repostedByMe;
+
+    // Update UI immediately (optimistic update)
+    setPosts((prev: any) =>
+      prev.map((p: any) =>
+        p.id === postId
+          ? {
+              ...p,
+              repostedByMe: !wasReposted,
+              repostCount: wasReposted ? p.repostCount - 1 : p.repostCount + 1,
+            }
+          : p
+      )
+    );
+
+    if (wasReposted) {
+      const { error } = await supabase
+        .from("reposts")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", currentUserId);
+
+      if (error) {
+        console.log("Remove repost error:", error.message);
+        setPosts((prev: any) =>
+          prev.map((p: any) =>
+            p.id === postId
+              ? { ...p, repostedByMe: true, repostCount: p.repostCount + 1 }
+              : p
+          )
+        );
+      }
+    } else {
+      const { error } = await supabase
+        .from("reposts")
+        .insert({ post_id: postId, user_id: currentUserId, original_user_id: target.user_id });
+
+      if (error) {
+        console.log("Repost error:", error.message);
+        setPosts((prev: any) =>
+          prev.map((p: any) =>
+            p.id === postId
+              ? { ...p, repostedByMe: false, repostCount: p.repostCount - 1 }
+              : p
+          )
+        );
+      }
+    }
+  };
 
   const renderPost = ({ item }: any) => (
     <View style={styles.postCard}>
@@ -123,14 +272,54 @@ export default function Explore() {
       </View>
 
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.actionItem}>
+        <TouchableOpacity
+          style={styles.actionItem}
+          onPress={() => router.push(`/post/${item.id}`)}
+          activeOpacity={0.7}
+        >
           <Ionicons name="chatbubble-outline" size={16} color="#888" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="repeat-outline" size={18} color="#888" />
+        <TouchableOpacity
+          style={[styles.actionItem, styles.likeItem]}
+          onPress={() => toggleRepost(item.id)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="repeat-outline"
+            size={18}
+            color={item.repostedByMe ? "#00c853" : "#888"}
+          />
+          {item.repostCount > 0 && (
+            <Text
+              style={[
+                styles.likeCount,
+                item.repostedByMe && styles.repostCountActive,
+              ]}
+            >
+              {item.repostCount}
+            </Text>
+          )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="heart-outline" size={16} color="#888" />
+        <TouchableOpacity
+          style={[styles.actionItem, styles.likeItem]}
+          onPress={() => toggleLike(item.id)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={item.likedByMe ? "heart" : "heart-outline"}
+            size={16}
+            color={item.likedByMe ? "#ff3b5c" : "#888"}
+          />
+          {item.likeCount > 0 && (
+            <Text
+              style={[
+                styles.likeCount,
+                item.likedByMe && styles.likeCountActive,
+              ]}
+            >
+              {item.likeCount}
+            </Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
           <Ionicons name="share-outline" size={16} color="#888" />
@@ -365,6 +554,22 @@ const styles = StyleSheet.create({
   },
   actionItem: {
     padding: 2,
+  },
+  likeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  likeCount: {
+    color: "#888",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  likeCountActive: {
+    color: "#ff3b5c",
+  },
+  repostCountActive: {
+    color: "#00c853",
   },
   emptyContainer: {
     flex: 1,
