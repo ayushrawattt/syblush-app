@@ -18,7 +18,9 @@ export default function Explore() {
   const [profileImage, setProfileImage] = useState(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [posts, setPosts] = useState([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
 
   useFocusEffect(
     useCallback(() => {
@@ -35,6 +37,13 @@ export default function Explore() {
             .eq("user_id", user.id)
             .eq("read", false);
           setUnreadNotifications(count ?? 0);
+
+          // ✅ following list fetch karo (Following tab ke liye)
+          const { data: followsData } = await supabase
+            .from("follows")
+            .select("following_id")
+            .eq("follower_id", user.id);
+          setFollowingIds((followsData || []).map((f) => f.following_id));
 
           const { data: postsData, error } = await supabase
             .from("posts")
@@ -65,6 +74,11 @@ export default function Explore() {
     }, []),
   );
 
+  const visiblePosts =
+    activeTab === "following"
+      ? posts.filter((p: any) => followingIds.includes(p.user_id))
+      : posts;
+
   const renderPost = ({ item }: any) => (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
@@ -72,22 +86,34 @@ export default function Explore() {
           {item.profiles?.avatar_url ? (
             <Image source={{ uri: item.profiles.avatar_url }} style={styles.avatarImg} />
           ) : (
-            <Ionicons name="person" size={14} color="#666" />
+            <Ionicons name="person" size={16} color="#666" />
           )}
         </View>
-        <Text style={styles.username}>
-          {item.profiles?.username || "User"}
-        </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.username}>{item.profiles?.username || "User"}</Text>
+        </View>
       </View>
+
+      {item.caption ? (
+        <Text style={styles.caption}>{item.caption}</Text>
+      ) : null}
 
       <Image source={{ uri: item.image_url }} style={styles.postImage} />
 
-      {item.caption ? (
-        <Text style={styles.caption}>
-          <Text style={styles.username}>{item.profiles?.username || "User"} </Text>
-          {item.caption}
-        </Text>
-      ) : null}
+      <View style={styles.actionRow}>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="chatbubble-outline" size={17} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="repeat-outline" size={19} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="heart-outline" size={17} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="share-outline" size={17} color="#888" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -126,15 +152,42 @@ export default function Explore() {
         </TouchableOpacity>
       </View>
 
+      {/* ✅ For you / Following tabs */}
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => setActiveTab("forYou")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.tabText, activeTab === "forYou" && styles.tabTextActive]}>
+            For you
+          </Text>
+          {activeTab === "forYou" && <View style={styles.tabIndicator} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => setActiveTab("following")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.tabText, activeTab === "following" && styles.tabTextActive]}>
+            Following
+          </Text>
+          {activeTab === "following" && <View style={styles.tabIndicator} />}
+        </TouchableOpacity>
+      </View>
+
       {loading ? (
         <ActivityIndicator color="#fff" style={{ marginTop: 40 }} />
-      ) : posts.length === 0 ? (
+      ) : visiblePosts.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No posts yet</Text>
+          <Text style={styles.emptyText}>
+            {activeTab === "following" ? "Follow people to see their posts" : "No posts yet"}
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={posts}
+          data={visiblePosts}
           keyExtractor={(item) => item.id}
           renderItem={renderPost}
           showsVerticalScrollIndicator={false}
@@ -188,45 +241,85 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: "bold",
   },
+  tabRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#1a1a1a",
+    marginBottom: 8,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  tabText: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  tabTextActive: {
+    color: "#fff",
+  },
+  tabIndicator: {
+    marginTop: 8,
+    width: 32,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#fff",
+  },
   postCard: {
-    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingBottom: 16,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
+    paddingTop: 12,
     paddingBottom: 6,
-    gap: 7,
+    gap: 8,
   },
   avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
   avatarImg: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   username: {
     color: "#fff",
-    fontWeight: "600",
-    fontSize: 12,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  caption: {
+    color: "#eee",
+    fontSize: 16,
+    lineHeight: 21,
+    marginBottom: 10,
   },
   postImage: {
     width: "100%",
     aspectRatio: 1,
+    borderRadius: 14,
     backgroundColor: "#0d0d0d",
   },
-  caption: {
-    color: "#aaa",
-    fontSize: 12,
-    paddingHorizontal: 10,
-    paddingTop: 6,
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    gap: 28,
+    marginTop: 12,
+  },
+  actionItem: {
+    padding: 2,
   },
   emptyContainer: {
     flex: 1,
