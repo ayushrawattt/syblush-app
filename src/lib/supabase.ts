@@ -6,8 +6,9 @@ const supabaseAnonKey = "sb_publishable_iQtyoBOSbH9vy7bbCTNwGw_SMmqp772";
 
 const getStorage = () => {
   if (typeof window === "undefined") return undefined;
+  if (typeof window.localStorage === "undefined") return undefined;
   if (Platform.OS === "web") {
-    return localStorage;
+    return window.localStorage;
   }
   const AsyncStorage = require("@react-native-async-storage/async-storage").default;
   return AsyncStorage;

@@ -27,34 +27,29 @@ export default function Search() {
 
   const handleSearch = useCallback(async (text: string) => {
     setQuery(text);
-
     if (!text.trim()) {
       setResults([]);
       return;
     }
-
     setLoading(true);
-
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, username, avatar_url")
       .or(`username.ilike.%${text.trim()}%,full_name.ilike.%${text.trim()}%`)
       .limit(20);
-
     if (error) {
       console.log("Search error:", error.message);
       setResults([]);
     } else {
       setResults(data ?? []);
     }
-
     setLoading(false);
   }, []);
 
   const renderItem = ({ item }: { item: SearchResult }) => (
     <TouchableOpacity
       style={styles.row}
-      onPress={() => router.push(`/user-profile?id=${item.id}`)}
+      onPress={() => router.push(`/user-profile?id=${item.id}` as any)}
     >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
@@ -75,9 +70,6 @@ export default function Search() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>{"<"}</Text>
-        </TouchableOpacity>
         <TextInput
           style={styles.input}
           value={query}
@@ -89,18 +81,15 @@ export default function Search() {
           autoFocus
         />
       </View>
-
       {loading && <ActivityIndicator color="#fff" style={{ marginTop: 20 }} />}
-
-      {!loading && query.trim() && results.length === 0 && (
+      {!loading && query.trim() !== "" && results.length === 0 && (
         <Text style={styles.emptyText}>No users found.</Text>
       )}
-
       <FlatList
         data={results}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 100 }}
         keyboardShouldPersistTaps="handled"
       />
     </SafeAreaView>
@@ -111,29 +100,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    paddingTop: 60,
+    paddingTop: 16,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 10,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#111",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#222",
-    marginRight: 10,
-  },
-  backText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   input: {
     flex: 1,
@@ -168,7 +141,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-        backgroundColor: "#222",
+    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,

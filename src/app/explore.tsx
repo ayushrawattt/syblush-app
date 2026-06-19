@@ -95,15 +95,6 @@ export default function Explore() {
     <SafeAreaView style={styles.container}>
       <View style={styles.topRow}>
         <TouchableOpacity
-          style={styles.searchBar}
-          onPress={() => router.push("/search")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="search" size={13} color="#555" style={{ marginRight: 5 }} />
-          <Text style={styles.searchPlaceholder}>Search</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={styles.iconButton}
           onPress={() => router.push("/create-post")}
           activeOpacity={0.7}
@@ -163,25 +154,10 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     gap: 8,
     marginBottom: 12,
     paddingHorizontal: 14,
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0d0d0d",
-    borderRadius: 14,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "#1e1e1e",
-  },
-  searchPlaceholder: {
-    color: "#555",
-    fontSize: 12,
   },
   iconButton: {
     width: 32,
