@@ -22,22 +22,17 @@ export default function Signup() {
       alert("Please enter a username");
       return;
     }
-
     setLoading(true);
-
     const { data: existing } = await supabase
       .from("profiles")
       .select("username")
       .eq("username", username.toLowerCase().trim())
       .single();
-
     setLoading(false);
-
     if (existing) {
       alert("This username is already taken. Please try another.");
       return;
     }
-
     setStep(2);
   };
 
@@ -46,35 +41,25 @@ export default function Signup() {
       alert("Please enter email and password");
       return;
     }
-
     setLoading(true);
-
     const cleanEmail = email.toLowerCase().trim();
     const cleanUsername = username.toLowerCase().trim();
-
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
-      options: {
-        data: {
-          username: cleanUsername,
-        },
-      },
+      options: { data: { username: cleanUsername } },
     });
-
     if (error) {
       setLoading(false);
       alert(error.message);
       return;
     }
-
     if (data.user) {
       await supabase
         .from("profiles")
         .update({ email: cleanEmail })
         .eq("id", data.user.id);
     }
-
     setLoading(false);
     alert("Account created! Please login.");
     router.replace("/login");
@@ -83,23 +68,20 @@ export default function Signup() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.formContainer}>
-
         <Text style={styles.logo}>SYBLUSH</Text>
 
         {step === 1 ? (
           <>
             <Text style={styles.heading}>Choose a Username</Text>
-
             <TextInput
               style={styles.input}
               placeholder="Username"
-              placeholderTextColor="#666"
+              placeholderTextColor="#444"
               autoCapitalize="none"
               autoFocus
               value={username}
               onChangeText={setUsername}
             />
-
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleNextStep}
@@ -114,27 +96,24 @@ export default function Signup() {
           <>
             <Text style={styles.heading}>Create Account</Text>
             <Text style={styles.subheading}>@{username}</Text>
-
             <TextInput
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor="#666"
+              placeholderTextColor="#444"
               autoCapitalize="none"
               keyboardType="email-address"
               autoFocus
               value={email}
               onChangeText={setEmail}
             />
-
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="#666"
+              placeholderTextColor="#444"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
-
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleSignup}
@@ -144,7 +123,6 @@ export default function Signup() {
                 {loading ? "Creating..." : "Create Account"}
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity onPress={() => setStep(1)} style={styles.backRow}>
               <Text style={styles.backText}>← Back</Text>
             </TouchableOpacity>
@@ -160,7 +138,6 @@ export default function Signup() {
             <Text style={styles.linkBold}>Login</Text>
           </Text>
         </TouchableOpacity>
-
       </View>
     </SafeAreaView>
   );
@@ -172,76 +149,76 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   formContainer: {
     width: "100%",
-    maxWidth: 380,
+    maxWidth: 340,
   },
   logo: {
     color: "#fff",
-    fontSize: 40,
+    fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 6,
     letterSpacing: 4,
   },
   heading: {
     color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "600",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   subheading: {
-    color: "#666",
-    fontSize: 14,
+    color: "#555",
+    fontSize: 13,
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   input: {
-    backgroundColor: "#111",
+    backgroundColor: "#0d0d0d",
     color: "#fff",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: "#222",
+    borderColor: "#1e1e1e",
   },
   button: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
+    padding: 13,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 4,
   },
   buttonDisabled: {
     backgroundColor: "#444",
   },
   buttonText: {
     color: "#000",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
   },
   backRow: {
-    marginTop: 16,
+    marginTop: 14,
     alignItems: "center",
   },
   backText: {
-    color: "#666",
-    fontSize: 14,
+    color: "#444",
+    fontSize: 13,
   },
   linkRow: {
-    marginTop: 24,
+    marginTop: 20,
     alignItems: "center",
   },
   linkText: {
-    color: "#666",
-    fontSize: 14,
+    color: "#444",
+    fontSize: 12,
   },
   linkBold: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "#888",
+    fontWeight: "600",
   },
 });
