@@ -19,7 +19,7 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const CARD_PADDING = 14;
 const AVATAR_SIZE = 34;
 const HEADER_GAP = 10;
-const IMAGE_LEFT_INSET = AVATAR_SIZE + HEADER_GAP; // align image with caption text, not avatar
+const IMAGE_LEFT_INSET = AVATAR_SIZE + HEADER_GAP;
 const POST_IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2 - IMAGE_LEFT_INSET;
 const POST_IMAGE_HEIGHT = Math.min(POST_IMAGE_WIDTH, 300);
 
@@ -130,7 +130,6 @@ export default function Explore() {
 
     const wasLiked = target.likedByMe;
 
-    // Update UI immediately (optimistic update)
     setPosts((prev: any) =>
       prev.map((p: any) =>
         p.id === postId
@@ -152,7 +151,6 @@ export default function Explore() {
 
       if (error) {
         console.log("Unlike error:", error.message);
-        // revert on failure
         setPosts((prev: any) =>
           prev.map((p: any) =>
             p.id === postId
@@ -168,7 +166,6 @@ export default function Explore() {
 
       if (error) {
         console.log("Like error:", error.message);
-        // revert on failure
         setPosts((prev: any) =>
           prev.map((p: any) =>
             p.id === postId
@@ -188,7 +185,6 @@ export default function Explore() {
 
     const wasReposted = target.repostedByMe;
 
-    // Update UI immediately (optimistic update)
     setPosts((prev: any) =>
       prev.map((p: any) =>
         p.id === postId
@@ -330,6 +326,8 @@ export default function Explore() {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      {/* TOP ROW: Add button left, icons right */}
       <View style={styles.topRow}>
         <TouchableOpacity
           style={styles.iconButton}
@@ -339,30 +337,36 @@ export default function Explore() {
           <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => router.push("/notifications")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="notifications-outline" size={16} color="#fff" />
-          {unreadNotifications > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {unreadNotifications > 9 ? "9+" : unreadNotifications}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.topRowRight}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => router.push("/notifications")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="notifications-outline" size={16} color="#fff" />
+            {unreadNotifications > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => router.push("/messages")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chatbubble-outline" size={16} color="#fff" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => router.push("/messages")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chatbubble-outline" size={16} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
+      {/* SYBLUSH TITLE - center, tabs ke upar */}
+      <Text style={styles.syblushTitle}>SYBLUSH</Text>
+
+      {/* TABS */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={styles.tabItem}
@@ -417,10 +421,14 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 8,
-    marginBottom: 12,
+    justifyContent: "space-between",  // ← left aur right mein split
+    marginBottom: 8,
     paddingHorizontal: 14,
+  },
+  topRowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   iconButton: {
     width: 32,
@@ -450,6 +458,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 8,
     fontWeight: "bold",
+  },
+  syblushTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: 5,
+    textAlign: "center",
+    marginBottom: 10,
   },
   tabRow: {
     flexDirection: "row",
