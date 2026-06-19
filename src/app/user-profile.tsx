@@ -16,7 +16,12 @@ import {
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const POST_SIZE = SCREEN_WIDTH / 3;
+const CARD_PADDING = 14;
+const AVATAR_SIZE = 34;
+const HEADER_GAP = 10;
+const IMAGE_LEFT_INSET = AVATAR_SIZE + HEADER_GAP;
+const POST_IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2 - IMAGE_LEFT_INSET;
+const POST_IMAGE_HEIGHT = Math.min(POST_IMAGE_WIDTH, 300);
 
 type Profile = {
   id: string;
@@ -73,7 +78,7 @@ export default function UserProfile() {
 
     const { data: postsData } = await supabase
       .from("posts")
-      .select("id, image_url")
+      .select("id, image_url, caption, created_at")
       .eq("user_id", id)
       .order("created_at", { ascending: false });
     setPosts(postsData || []);
@@ -150,12 +155,66 @@ export default function UserProfile() {
 
   const isOwnProfile = currentUserId === id;
 
+  const renderPost = ({ item }: any) => (
+    <View style={styles.postCard}>
+      <View style={styles.postHeader}>
+        <View style={styles.avatar}>
+          {profile.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
+          ) : (
+            <Ionicons name="person" size={16} color="#666" />
+          )}
+        </View>
+
+        <View style={styles.headerTextCol}>
+          <View style={styles.nameRow}>
+            <Text style={styles.fullName} numberOfLines={1}>
+              {profile.full_name}
+            </Text>
+            <Text style={styles.handle} numberOfLines={1}>
+              @{profile.username}
+            </Text>
+          </View>
+
+          {item.caption ? (
+            <Text style={styles.caption}>{item.caption}</Text>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{ uri: item.image_url }}
+          style={styles.postImage}
+          resizeMode="cover"
+        />
+      </View>
+
+      <View style={styles.actionRow}>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="chatbubble-outline" size={16} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="repeat-outline" size={18} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="heart-outline" size={16} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem}>
+          <Ionicons name="share-outline" size={16} color="#888" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        numColumns={3}
+        renderItem={renderPost}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 80 }}
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.topBar}>
@@ -169,9 +228,9 @@ export default function UserProfile() {
             <View style={styles.profileRow}>
               <TouchableOpacity onPress={() => setShowImage(true)}>
                 {profile.avatar_url ? (
-                  <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+                  <Image source={{ uri: profile.avatar_url }} style={styles.bigAvatar} />
                 ) : (
-                  <View style={styles.avatarPlaceholder}>
+                  <View style={styles.bigAvatarPlaceholder}>
                     <Ionicons name="person" size={28} color="#555" />
                   </View>
                 )}
@@ -227,20 +286,8 @@ export default function UserProfile() {
                 </TouchableOpacity>
               </View>
             )}
-
-            <View style={styles.gridHeader}>
-              <Ionicons name="grid-outline" size={18} color="#fff" />
-            </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.postThumb}
-            onPress={() => router.push(`/post/${item.id}` as any)}
-          >
-            <Image source={{ uri: item.image_url }} style={styles.postImage} />
-          </TouchableOpacity>
-        )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No posts yet</Text>
@@ -252,6 +299,7 @@ export default function UserProfile() {
         <TouchableOpacity
           style={styles.modalOverlay}
           onPress={() => setShowImage(false)}
+          activeOpacity={1}
         >
           <Image source={{ uri: profile.avatar_url || "" }} style={styles.modalImage} />
         </TouchableOpacity>
@@ -290,8 +338,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 24,
   },
-  avatar: { width: 72, height: 72, borderRadius: 36 },
-  avatarPlaceholder: {
+  bigAvatar: { width: 72, height: 72, borderRadius: 36 },
+  bigAvatarPlaceholder: {
     width: 72,
     height: 72,
     borderRadius: 36,
@@ -333,19 +381,66 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   messageButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-  gridHeader: {
-    borderTopWidth: 1,
-    borderTopColor: "#222",
-    paddingVertical: 8,
+
+  // ✅ X-style feed post card
+  postCard: {
+    paddingHorizontal: CARD_PADDING,
+    paddingTop: 12,
+    paddingBottom: 14,
+    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
+  },
+  postHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: HEADER_GAP,
+    marginBottom: 10,
+  },
+  avatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: "#1a1a1a",
+    justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
   },
-  postThumb: { width: POST_SIZE, height: POST_SIZE },
-  postImage: {
-    width: POST_SIZE - 2,
-    height: POST_SIZE - 2,
-    margin: 1,
-    backgroundColor: "#111",
+  avatarImg: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
   },
+  headerTextCol: { flex: 1 },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 4,
+  },
+  fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
+  handle: { color: "#777", fontSize: 13, flexShrink: 1 },
+  caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
+  imageWrapper: {
+    width: POST_IMAGE_WIDTH,
+    height: POST_IMAGE_HEIGHT,
+    marginLeft: IMAGE_LEFT_INSET,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#0d0d0d",
+    borderWidth: 1,
+    borderColor: "#262626",
+  },
+  postImage: { width: "100%", height: "100%" },
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    gap: 26,
+    marginTop: 10,
+    marginLeft: IMAGE_LEFT_INSET,
+  },
+  actionItem: { padding: 2 },
+
   emptyContainer: { paddingTop: 40, alignItems: "center" },
   emptyText: { color: "#555", fontSize: 13 },
   notFound: { color: "#666", textAlign: "center", marginTop: 100 },
