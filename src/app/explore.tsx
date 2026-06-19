@@ -26,12 +26,9 @@ export default function Explore() {
         const img = await AsyncStorage.getItem("profileImage");
         setProfileImage(img);
 
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
-          // Notifications count
           const { count } = await supabase
             .from("notifications")
             .select("*", { count: "exact", head: true })
@@ -39,7 +36,6 @@ export default function Explore() {
             .eq("read", false);
           setUnreadNotifications(count ?? 0);
 
-          // ✅ Posts fetch - profiles join hataya
           const { data: postsData, error } = await supabase
             .from("posts")
             .select("id, image_url, caption, created_at, user_id")
@@ -48,7 +44,6 @@ export default function Explore() {
           if (error) {
             console.log("Posts fetch error:", error.message);
           } else {
-            // ✅ Har post ke liye profile alag fetch karo
             const postsWithProfiles = await Promise.all(
               (postsData || []).map(async (post) => {
                 const { data: profile } = await supabase
@@ -77,7 +72,7 @@ export default function Explore() {
           {item.profiles?.avatar_url ? (
             <Image source={{ uri: item.profiles.avatar_url }} style={styles.avatarImg} />
           ) : (
-            <Ionicons name="person" size={18} color="#888" />
+            <Ionicons name="person" size={14} color="#666" />
           )}
         </View>
         <Text style={styles.username}>
@@ -104,7 +99,7 @@ export default function Explore() {
           onPress={() => router.push("/search")}
           activeOpacity={0.7}
         >
-          <Ionicons name="search" size={16} color="#666" style={{ marginRight: 6 }} />
+          <Ionicons name="search" size={13} color="#555" style={{ marginRight: 5 }} />
           <Text style={styles.searchPlaceholder}>Search</Text>
         </TouchableOpacity>
 
@@ -113,7 +108,7 @@ export default function Explore() {
           onPress={() => router.push("/create-post")}
           activeOpacity={0.7}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -121,7 +116,7 @@ export default function Explore() {
           onPress={() => router.push("/notifications")}
           activeOpacity={0.7}
         >
-          <Ionicons name="notifications-outline" size={20} color="#fff" />
+          <Ionicons name="notifications-outline" size={16} color="#fff" />
           {unreadNotifications > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
@@ -136,7 +131,7 @@ export default function Explore() {
           onPress={() => router.push("/messages")}
           activeOpacity={0.7}
         >
-          <Ionicons name="chatbubble-outline" size={19} color="#fff" />
+          <Ionicons name="chatbubble-outline" size={16} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -152,6 +147,7 @@ export default function Explore() {
           keyExtractor={(item) => item.id}
           renderItem={renderPost}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 80 }}
         />
       )}
     </SafeAreaView>
@@ -162,38 +158,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    paddingTop: 50,
+    paddingTop: 8,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    marginBottom: 20,
-    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 12,
+    paddingHorizontal: 14,
   },
   searchBar: {
-    width: 200,
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#111",
-    borderRadius: 18,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
+    backgroundColor: "#0d0d0d",
+    borderRadius: 14,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: "#222",
+    borderColor: "#1e1e1e",
   },
   searchPlaceholder: {
-    color: "#666",
-    fontSize: 13,
+    color: "#555",
+    fontSize: 12,
   },
   iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#181818",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#0d0d0d",
     borderWidth: 1,
-    borderColor: "#2a2a2a",
+    borderColor: "#1e1e1e",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -202,59 +198,59 @@ const styles = StyleSheet.create({
     top: -2,
     right: -2,
     backgroundColor: "#ff3b30",
-    borderRadius: 9,
-    minWidth: 18,
-    height: 18,
+    borderRadius: 7,
+    minWidth: 14,
+    height: 14,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 3,
-    borderWidth: 1.5,
+    paddingHorizontal: 2,
+    borderWidth: 1,
     borderColor: "#000",
   },
   badgeText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "bold",
   },
   postCard: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-    gap: 8,
+    paddingHorizontal: 10,
+    paddingBottom: 6,
+    gap: 7,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#222",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
   avatarImg: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
   username: {
     color: "#fff",
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 12,
   },
   postImage: {
     width: "100%",
     aspectRatio: 1,
-    backgroundColor: "#111",
+    backgroundColor: "#0d0d0d",
   },
   caption: {
-    color: "#ccc",
-    fontSize: 13,
-    paddingHorizontal: 12,
-    paddingTop: 8,
+    color: "#aaa",
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingTop: 6,
   },
   emptyContainer: {
     flex: 1,
@@ -262,7 +258,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "#555",
-    fontSize: 16,
+    color: "#444",
+    fontSize: 13,
   },
 });
