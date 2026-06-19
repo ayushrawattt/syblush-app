@@ -38,7 +38,6 @@ export default function Explore() {
             .eq("read", false);
           setUnreadNotifications(count ?? 0);
 
-          // ✅ following list fetch karo (Following tab ke liye)
           const { data: followsData } = await supabase
             .from("follows")
             .select("following_id")
@@ -98,20 +97,26 @@ export default function Explore() {
         <Text style={styles.caption}>{item.caption}</Text>
       ) : null}
 
-      <Image source={{ uri: item.image_url }} style={styles.postImage} />
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{ uri: item.image_url }}
+          style={styles.postImage}
+          resizeMode="cover"
+        />
+      </View>
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="chatbubble-outline" size={17} color="#888" />
+          <Ionicons name="chatbubble-outline" size={16} color="#888" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="repeat-outline" size={19} color="#888" />
+          <Ionicons name="repeat-outline" size={18} color="#888" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="heart-outline" size={17} color="#888" />
+          <Ionicons name="heart-outline" size={16} color="#888" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="share-outline" size={17} color="#888" />
+          <Ionicons name="share-outline" size={16} color="#888" />
         </TouchableOpacity>
       </View>
     </View>
@@ -152,7 +157,6 @@ export default function Explore() {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ For you / Following tabs */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={styles.tabItem}
@@ -245,55 +249,56 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#1a1a1a",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 9,
   },
   tabText: {
     color: "#888",
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "500",
   },
   tabTextActive: {
     color: "#fff",
+    fontWeight: "600",
   },
   tabIndicator: {
-    marginTop: 8,
-    width: 32,
-    height: 3,
+    marginTop: 6,
+    width: 26,
+    height: 2,
     borderRadius: 2,
     backgroundColor: "#fff",
   },
   postCard: {
     paddingHorizontal: 14,
-    paddingBottom: 16,
-    marginBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 14,
+    marginBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 12,
     paddingBottom: 6,
     gap: 8,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
   avatarImg: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   username: {
     color: "#fff",
@@ -302,21 +307,26 @@ const styles = StyleSheet.create({
   },
   caption: {
     color: "#eee",
-    fontSize: 16,
-    lineHeight: 21,
-    marginBottom: 10,
+    fontSize: 15,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  imageWrapper: {
+    width: "100%",
+    maxHeight: 320,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#0d0d0d",
   },
   postImage: {
     width: "100%",
-    aspectRatio: 1,
-    borderRadius: 14,
-    backgroundColor: "#0d0d0d",
+    height: 260,
   },
   actionRow: {
     flexDirection: "row",
     justifyContent: "flex-start",
-    gap: 28,
-    marginTop: 12,
+    gap: 26,
+    marginTop: 10,
   },
   actionItem: {
     padding: 2,
