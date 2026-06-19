@@ -37,7 +37,7 @@ export default function Messages() {
       .select("id, sender_id, receiver_id, content, created_at, read")
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .order("created_at", { ascending: false });
-    if (error) { console.log("Load conversations error:", error.message); setLoading(false); return; }
+    if (error) { console.log(error.message); setLoading(false); return; }
     if (!messages || messages.length === 0) { setConversations([]); setLoading(false); return; }
     const conversationMap = new Map();
     for (const msg of messages) {
@@ -55,7 +55,7 @@ export default function Messages() {
       .from("profiles")
       .select("id, full_name, username, avatar_url")
       .in("id", otherUserIds);
-    if (profilesError) { console.log("Load profiles error:", profilesError.message); setLoading(false); return; }
+    if (profilesError) { console.log(profilesError.message); setLoading(false); return; }
     const result = (profiles ?? []).map((p) => {
       const convo = conversationMap.get(p.id);
       return { otherUserId: p.id, full_name: p.full_name, username: p.username, avatar_url: p.avatar_url, lastMessage: convo.lastMessage, lastMessageTime: convo.lastMessageTime, unread: convo.unread };
@@ -67,7 +67,7 @@ export default function Messages() {
 
   useFocusEffect(useCallback(() => { loadConversations(); }, [loadConversations]));
 
-  const formatTime = (isoString) => {
+  const formatTime = (isoString: string) => {
     const date = new Date(isoString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -81,10 +81,10 @@ export default function Messages() {
     return date.toLocaleDateString();
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: Conversation }) => (
     <TouchableOpacity
       style={styles.row}
-      onPress={() => router.push("/chat?id=" + item.otherUserId + "&name=" + encodeURIComponent(item.full_name))}
+      onPress={() => router.push(("/chat?id=" + item.otherUserId + "&name=" + encodeURIComponent(item.full_name)) as any)}
     >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
@@ -115,7 +115,7 @@ export default function Messages() {
       {loading && <ActivityIndicator color="#fff" style={{ marginTop: 30 }} />}
       {!loading && conversations.length === 0 && (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No messages yet.</Text>
+          <Text style={styles.emptyText}>No messages yet</Text>
           <Text style={styles.emptySubtext}>Search for people and start a conversation!</Text>
         </View>
       )}
@@ -123,30 +123,120 @@ export default function Messages() {
         data={conversations}
         keyExtractor={(item) => item.otherUserId}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000", paddingTop: 60 },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, marginBottom: 20 },
-  backButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#111", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "#222", marginRight: 12 },
-  backText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-  title: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  emptyContainer: { alignItems: "center", marginTop: 60, paddingHorizontal: 40 },
-  emptyText: { color: "#fff", fontSize: 16, fontWeight: "600", marginBottom: 6 },
-  emptySubtext: { color: "#666", fontSize: 13, textAlign: "center" },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#111" },
-  avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
-  avatarPlaceholder: { width: 50, height: 50, borderRadius: 25, backgroundColor: "#222", justifyContent: "center", alignItems: "center", marginRight: 12 },
-  avatarText: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  info: { flex: 1 },
-  name: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  lastMessage: { color: "#666", fontSize: 13, marginTop: 2 },
-  lastMessageUnread: { color: "#fff", fontWeight: "600" },
-  rightSide: { alignItems: "flex-end" },
-  time: { color: "#666", fontSize: 12, marginBottom: 6 },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#0af" },
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+    paddingTop: 8,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
+    marginBottom: 4,
+  },
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#111",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#222",
+    marginRight: 12,
+  },
+  backText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  title: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: 60,
+    paddingHorizontal: 40,
+  },
+  emptyText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  emptySubtext: {
+    color: "#555",
+    fontSize: 13,
+    textAlign: "center",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#0f0f0f",
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#1a1a1a",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  avatarText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  info: {
+    flex: 1,
+  },
+  name: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  lastMessage: {
+    color: "#555",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  lastMessageUnread: {
+    color: "#ccc",
+    fontWeight: "600",
+  },
+  rightSide: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
+  time: {
+    color: "#444",
+    fontSize: 11,
+  },
+  unreadDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#0af",
+  },
 });

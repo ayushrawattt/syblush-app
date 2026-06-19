@@ -37,11 +37,6 @@ export default function Profile() {
       .eq("id", user.id)
       .single();
 
-    if (error) {
-      console.log("Error loading profile:", error.message);
-      return;
-    }
-
     if (data) {
       if (data.full_name) setName(data.full_name);
       if (data.username) setUsername(data.username);
@@ -75,11 +70,7 @@ export default function Profile() {
     setPostsCount(postsData?.length ?? 0);
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadProfile();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { loadProfile(); }, []));
 
   return (
     <SafeAreaView style={styles.container}>
@@ -90,46 +81,50 @@ export default function Profile() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.topBar}>
+              <Text style={styles.title}>@{username}</Text>
               <TouchableOpacity
                 style={styles.settingsButton}
                 onPress={() => router.push("/settings")}
               >
-                <Text style={styles.settingsIcon}>☰</Text>
+                <Ionicons name="menu-outline" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
 
-            {profileImage ? (
+            <View style={styles.profileRow}>
               <TouchableOpacity onPress={() => setShowImage(true)}>
-                <Image source={{ uri: profileImage }} style={styles.avatar} />
+                {profileImage ? (
+                  <Image source={{ uri: profileImage }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Ionicons name="person" size={28} color="#555" />
+                  </View>
+                )}
               </TouchableOpacity>
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={{ fontSize: 45 }}>👤</Text>
-              </View>
-            )}
 
-            <Text style={styles.name}>{name}</Text>
-            <Text style={styles.usernameText}>@{username}</Text>
-
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{postsCount}</Text>
-                <Text style={styles.statLabel}>Posts</Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{postsCount}</Text>
+                  <Text style={styles.statLabel}>Posts</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.statItem}
+                  onPress={() => router.push("/follow-list?type=followers")}
+                >
+                  <Text style={styles.statNumber}>{followersCount}</Text>
+                  <Text style={styles.statLabel}>Followers</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.statItem}
+                  onPress={() => router.push("/follow-list?type=following")}
+                >
+                  <Text style={styles.statNumber}>{followingCount}</Text>
+                  <Text style={styles.statLabel}>Following</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.statItem}
-                onPress={() => router.push("/follow-list?type=followers")}
-              >
-                <Text style={styles.statNumber}>{followersCount}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.statItem}
-                onPress={() => router.push("/follow-list?type=following")}
-              >
-                <Text style={styles.statNumber}>{followingCount}</Text>
-                <Text style={styles.statLabel}>Following</Text>
-              </TouchableOpacity>
+            </View>
+
+            <View style={styles.bioSection}>
+              <Text style={styles.name}>{name}</Text>
             </View>
 
             <View style={styles.buttonRow}>
@@ -143,19 +138,19 @@ export default function Profile() {
                 style={styles.createButton}
                 onPress={() => router.push("/create-post")}
               >
-                <Ionicons name="add" size={20} color="#fff" />
+                <Ionicons name="add" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.gridHeader}>
-              <Ionicons name="grid-outline" size={20} color="#fff" />
+              <Ionicons name="grid-outline" size={18} color="#fff" />
             </View>
           </View>
         }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.postThumb}
-            onPress={() => router.push(`/post/${item.id}`)}  // ✅ Yahan fix kiya
+            onPress={() => router.push(`/post/${item.id}` as any)}
           >
             <Image source={{ uri: item.image_url }} style={styles.postImage} />
           </TouchableOpacity>
@@ -172,10 +167,7 @@ export default function Profile() {
           style={styles.modalOverlay}
           onPress={() => setShowImage(false)}
         >
-          <Image
-            source={{ uri: profileImage || "" }}
-            style={styles.modalImage}
-          />
+          <Image source={{ uri: profileImage || "" }} style={styles.modalImage} />
         </TouchableOpacity>
       </Modal>
     </SafeAreaView>
@@ -183,140 +175,96 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
-  header: {
-    alignItems: "center",
-    paddingTop: 60,
-  },
+  container: { flex: 1, backgroundColor: "#000" },
+  header: { paddingTop: 8 },
   topBar: {
-    width: "100%",
-    alignItems: "flex-end",
-    paddingHorizontal: 30,
-    marginBottom: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
   },
+  title: { color: "#fff", fontSize: 15, fontWeight: "600" },
   settingsButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#222",
   },
-  settingsIcon: {
-    fontSize: 18,
-    color: "#fff",
-    fontWeight: "bold",
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 24,
   },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 20,
-  },
+  avatar: { width: 72, height: 72, borderRadius: 36 },
   avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: "#222",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
   },
-  name: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  usernameText: {
-    color: "#777",
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  statsRow: {
-    flexDirection: "row",
-    marginBottom: 25,
-    gap: 40,
-  },
-  statItem: {
-    alignItems: "center",
-  },
-  statNumber: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  statLabel: {
-    color: "#777",
-    fontSize: 13,
-    marginTop: 2,
-  },
+  statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
+  statItem: { alignItems: "center" },
+  statNumber: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  statLabel: { color: "#666", fontSize: 11, marginTop: 2 },
+  bioSection: { paddingHorizontal: 16, marginBottom: 12 },
+  name: { color: "#fff", fontSize: 13, fontWeight: "600" },
   buttonRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 12,
   },
   editButton: {
-    width: 240,
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 12,
+    flex: 1,
+    backgroundColor: "#1a1a1a",
+    paddingVertical: 8,
+    borderRadius: 8,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#333",
   },
-  editButtonText: {
-    color: "#000",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+  editButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
   createButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: "#222",
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#333",
   },
   gridHeader: {
-    width: "100%",
     borderTopWidth: 1,
     borderTopColor: "#222",
-    paddingVertical: 10,
+    paddingVertical: 8,
     alignItems: "center",
   },
-  postThumb: {
-    width: POST_SIZE,
-    height: POST_SIZE,
-  },
+  postThumb: { width: POST_SIZE, height: POST_SIZE },
   postImage: {
     width: POST_SIZE - 2,
     height: POST_SIZE - 2,
     margin: 1,
     backgroundColor: "#111",
   },
-  emptyContainer: {
-    paddingTop: 40,
-    alignItems: "center",
-  },
-  emptyText: {
-    color: "#555",
-    fontSize: 16,
-  },
+  emptyContainer: { paddingTop: 40, alignItems: "center" },
+  emptyText: { color: "#555", fontSize: 13 },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "rgba(0,0,0,0.9)",
     justifyContent: "center",
     alignItems: "center",
   },
-  modalImage: {
-    width: 320,
-    height: 320,
-    borderRadius: 20,
-  },
+  modalImage: { width: 300, height: 300, borderRadius: 16 },
 });
