@@ -11,25 +11,16 @@ import {
 import { supabase } from "../lib/supabase";
 
 export default function Login() {
-  const [identifier, setIdentifier] = useState(""); // email or username
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
-  // Watch for login (including Google redirect) and auto-navigate
   useEffect(() => {
-    // Listen for auth events. INITIAL_SESSION fires once Supabase has
-    // finished checking storage AND parsing any token from the URL
-    // (this is what was racing with getSession() before, causing the
-    // "have to click login twice" bug after Google redirect).
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("AUTH STATE CHANGED:", event, session);
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
         router.replace("/explore");
       }
     });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   const handleLogin = async () => {
@@ -40,7 +31,6 @@ export default function Login() {
 
     let loginEmail = identifier.trim();
 
-    // If it doesn't look like an email, treat it as a username and look up the email
     if (!loginEmail.includes("@")) {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -52,7 +42,6 @@ export default function Login() {
         alert("Username nahi mila. Please check karo.");
         return;
       }
-
       loginEmail = profile.email;
     }
 
@@ -61,13 +50,9 @@ export default function Login() {
       password,
     });
 
-    console.log("LOGIN DATA:", data);
-    console.log("LOGIN ERROR:", error);
-
     if (error) {
       alert(error.message);
     } else {
-      alert("Login Successful");
       router.replace("/explore");
     }
   };
@@ -79,26 +64,20 @@ export default function Login() {
         redirectTo: "http://localhost:8081/login",
       },
     });
-
-    console.log("GOOGLE LOGIN DATA:", data);
-    console.log("GOOGLE LOGIN ERROR:", error);
-
-    if (error) {
-      alert(error.message);
-    }
+    if (error) alert(error.message);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.formContainer}>
+
         <Text style={styles.logo}>SYBLUSH</Text>
         <Text style={styles.heading}>Login</Text>
 
-        {/* Email or Username input */}
         <TextInput
           style={styles.input}
           placeholder="Email or Username"
-          placeholderTextColor="#666"
+          placeholderTextColor="#444"
           autoCapitalize="none"
           value={identifier}
           onChangeText={setIdentifier}
@@ -107,38 +86,34 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#666"
+          placeholderTextColor="#444"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
-        {/* Login Button */}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>
-
         </TouchableOpacity>
 
-        {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>or</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Google Sign-In */}
         <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
           <Text style={styles.googleIcon}>G</Text>
           <Text style={styles.googleButtonText}>Continue with Google</Text>
         </TouchableOpacity>
 
-        {/* Create Account Link */}
         <TouchableOpacity onPress={() => router.push("/signup")} style={styles.linkRow}>
           <Text style={styles.linkText}>
             Don't have an account?{" "}
             <Text style={styles.linkBold}>Create Account</Text>
           </Text>
         </TouchableOpacity>
+
       </View>
     </SafeAreaView>
   );
@@ -150,90 +125,96 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   formContainer: {
     width: "100%",
-    maxWidth: 380,
+    maxWidth: 340,
   },
   logo: {
     color: "#fff",
-    fontSize: 40,
+    fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 6,
     letterSpacing: 4,
   },
   heading: {
-    color: "#fff",
-    fontSize: 22,
+    color: "#555",
+    fontSize: 14,
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 20,
+    letterSpacing: 1,
   },
   input: {
-    backgroundColor: "#111",
+    backgroundColor: "#0d0d0d",
     color: "#fff",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: "#222",
+    borderColor: "#1e1e1e",
   },
   button: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
+    padding: 13,
+    borderRadius: 10,
     alignItems: "center",
     marginTop: 4,
   },
   buttonText: {
     color: "#000",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
+    letterSpacing: 0.5,
   },
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#222",
+    backgroundColor: "#1a1a1a",
   },
   dividerText: {
-    color: "#555",
-    marginHorizontal: 12,
-    fontSize: 13,
+    color: "#444",
+    marginHorizontal: 10,
+    fontSize: 12,
   },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#111",
-    padding: 14,
-    borderRadius: 12,
+    backgroundColor: "#0d0d0d",
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#222",
   },
   googleIcon: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
-    marginRight: 10,
+    marginRight: 8,
   },
   googleButtonText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "600",
+    color: "#aaa",
+    fontSize: 13,
+    fontWeight: "500",
   },
   linkRow: {
-    marginTop: 24,
+    marginTop: 20,
     alignItems: "center",
   },
+  linkText: {
+    color: "#444",
+    fontSize: 12,
+  },
   linkBold: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "#888",
+    fontWeight: "600",
   },
 });
