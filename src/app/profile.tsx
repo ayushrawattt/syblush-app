@@ -20,6 +20,7 @@ const POST_SIZE = SCREEN_WIDTH / 3;
 export default function Profile() {
   const [name, setName] = useState("Ayush Rawat");
   const [username, setUsername] = useState("ayush");
+  const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showImage, setShowImage] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -31,15 +32,16 @@ export default function Profile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
-      .select("full_name, username, avatar_url")
+      .select("full_name, username, avatar_url, bio")
       .eq("id", user.id)
       .single();
 
     if (data) {
       if (data.full_name) setName(data.full_name);
       if (data.username) setUsername(data.username);
+      if (data.bio) setBio(data.bio);
       if (data.avatar_url) {
         setProfileImage(data.avatar_url + "?t=" + Date.now());
       } else {
@@ -81,9 +83,15 @@ export default function Profile() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.topBar}>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => router.push("/create-post")}
+              >
+                <Ionicons name="add" size={18} color="#fff" />
+              </TouchableOpacity>
               <Text style={styles.title}>@{username}</Text>
               <TouchableOpacity
-                style={styles.settingsButton}
+                style={styles.iconBtn}
                 onPress={() => router.push("/settings")}
               >
                 <Ionicons name="menu-outline" size={20} color="#fff" />
@@ -125,6 +133,7 @@ export default function Profile() {
 
             <View style={styles.bioSection}>
               <Text style={styles.name}>{name}</Text>
+              {bio ? <Text style={styles.bio}>{bio}</Text> : null}
             </View>
 
             <View style={styles.buttonRow}>
@@ -133,12 +142,6 @@ export default function Profile() {
                 onPress={() => router.push("/edit-profile")}
               >
                 <Text style={styles.editButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.createButton}
-                onPress={() => router.push("/create-post")}
-              >
-                <Ionicons name="add" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
 
@@ -186,8 +189,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#111",
   },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  settingsButton: {
+  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center", flex: 1 },
+  iconBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -219,14 +222,9 @@ const styles = StyleSheet.create({
   statLabel: { color: "#666", fontSize: 11, marginTop: 2 },
   bioSection: { paddingHorizontal: 16, marginBottom: 12 },
   name: { color: "#fff", fontSize: 13, fontWeight: "600" },
-  buttonRow: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 12,
-  },
+  bio: { color: "#aaa", fontSize: 12, marginTop: 4, lineHeight: 18 },
+  buttonRow: { paddingHorizontal: 16, marginBottom: 12 },
   editButton: {
-    flex: 1,
     backgroundColor: "#1a1a1a",
     paddingVertical: 8,
     borderRadius: 8,
@@ -235,16 +233,6 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   editButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-  createButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: "#1a1a1a",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#333",
-  },
   gridHeader: {
     borderTopWidth: 1,
     borderTopColor: "#222",
