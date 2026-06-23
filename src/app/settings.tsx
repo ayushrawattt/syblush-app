@@ -11,17 +11,18 @@ export default function Settings() {
       return;
     }
 
+    router.dismissAll();
     router.replace("/login");
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity
-  style={styles.backButton}
-  onPress={() => router.back()}
->
-  <Text style={styles.backText}>{"<"}</Text>
-</TouchableOpacity>
+        style={styles.backButton}
+        onPress={() => router.back()}
+      >
+        <Text style={styles.backText}>{"<"}</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Settings</Text>
 
       <View style={styles.card}>
@@ -43,14 +44,12 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     alignItems: "center",
   },
-
   title: {
     color: "#fff",
     fontSize: 30,
     fontWeight: "bold",
     marginBottom: 30,
   },
-
   card: {
     width: 320,
     backgroundColor: "#111",
@@ -60,19 +59,16 @@ const styles = StyleSheet.create({
     borderColor: "#222",
     marginBottom: 20,
   },
-
   optionTitle: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
-
   optionValue: {
     color: "#888",
     fontSize: 14,
     marginTop: 5,
   },
-
   logoutButton: {
     width: 320,
     backgroundColor: "#fff",
@@ -80,7 +76,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
   },
-
   logoutText: {
     color: "#000",
     fontSize: 16,
@@ -99,7 +94,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#222",
   },
-  
   backText: {
     color: "#fff",
     fontSize: 18,
