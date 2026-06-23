@@ -327,7 +327,7 @@ export default function Explore() {
   return (
     <SafeAreaView style={styles.container}>
 
-      {/* TOP ROW: Add button left, icons right */}
+      {/* TOP ROW: Add button | SYBLUSH | notification + message */}
       <View style={styles.topRow}>
         <TouchableOpacity
           style={styles.iconButton}
@@ -336,6 +336,8 @@ export default function Explore() {
         >
           <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
+
+        <Text style={styles.syblushTitle}>SYBLUSH</Text>
 
         <View style={styles.topRowRight}>
           <TouchableOpacity
@@ -362,9 +364,6 @@ export default function Explore() {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* SYBLUSH TITLE - center, tabs ke upar */}
-      <Text style={styles.syblushTitle}>SYBLUSH</Text>
 
       {/* TABS */}
       <View style={styles.tabRow}>
@@ -421,7 +420,7 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",  // ← left aur right mein split
+    justifyContent: "space-between",
     marginBottom: 8,
     paddingHorizontal: 14,
   },
@@ -465,7 +464,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 5,
     textAlign: "center",
-    marginBottom: 10,
+    flex: 1,
   },
   tabRow: {
     flexDirection: "row",
