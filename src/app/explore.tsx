@@ -327,8 +327,9 @@ export default function Explore() {
   return (
     <SafeAreaView style={styles.container}>
 
-      {/* TOP ROW: Add button | SYBLUSH | notification + message */}
+      {/* TOP ROW: Add button | SYBLUSH centered | notification + message */}
       <View style={styles.topRow}>
+
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() => router.push("/create-post")}
@@ -337,6 +338,7 @@ export default function Explore() {
           <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
 
+        {/* Absolutely centered SYBLUSH */}
         <Text style={styles.syblushTitle}>SYBLUSH</Text>
 
         <View style={styles.topRowRight}>
@@ -423,6 +425,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
     paddingHorizontal: 14,
+    position: "relative",
   },
   topRowRight: {
     flexDirection: "row",
@@ -464,7 +467,9 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 5,
     textAlign: "center",
-    flex: 1,
+    position: "absolute",
+    left: 0,
+    right: 0,
   },
   tabRow: {
     flexDirection: "row",
