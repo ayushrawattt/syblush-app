@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle, Line } from "react-native-svg";
+import VerifiedBadge from "../components/verified-badge";
 import { supabase } from "../lib/supabase";
 
 type Conversation = {
@@ -22,6 +23,7 @@ type Conversation = {
   lastMessage: string;
   lastMessageTime: string;
   unread: boolean;
+  is_verified: boolean;
 };
 
 type FollowedUser = {
@@ -86,9 +88,10 @@ export default function Messages() {
     const otherUserIds = Array.from(conversationMap.keys());
     if (otherUserIds.length === 0) { setConversations([]); setLoading(false); return; }
 
+    // is_verified bhi fetch karo
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url")
+      .select("id, full_name, username, avatar_url, is_verified")
       .in("id", otherUserIds);
 
     const result = (profiles ?? []).map((p) => {
@@ -98,6 +101,7 @@ export default function Messages() {
         full_name: p.full_name,
         username: p.username,
         avatar_url: p.avatar_url,
+        is_verified: p.is_verified ?? false,
         lastMessage: convo.lastMessage,
         lastMessageTime: convo.lastMessageTime,
         unread: convo.unread,
@@ -138,7 +142,11 @@ export default function Messages() {
         </View>
       )}
       <View style={styles.info}>
-        <Text style={styles.name}>{item.full_name}</Text>
+        {/* Naam + username + tick ek row mein */}
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>{item.full_name}</Text>
+          {item.is_verified && <VerifiedBadge size={13} />}
+        </View>
         <Text style={[styles.lastMessage, item.unread && styles.lastMessageUnread]} numberOfLines={1}>
           {item.lastMessage}
         </Text>
@@ -153,7 +161,7 @@ export default function Messages() {
   return (
     <SafeAreaView style={styles.container}>
 
-      {/* TOP HEADER - back + username center */}
+      {/* TOP HEADER */}
       <View style={styles.headerTop}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backText}>{"<"}</Text>
@@ -164,7 +172,7 @@ export default function Messages() {
         <View style={{ width: 32 }} />
       </View>
 
-      {/* SEARCH BAR - Instagram style */}
+      {/* SEARCH BAR */}
       <View style={styles.searchBarContainer}>
         <TouchableOpacity
           style={styles.searchBar}
@@ -369,6 +377,11 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   name: {
     color: "#fff",

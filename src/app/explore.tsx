@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import VerifiedBadge from "../components/verified-badge";
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -66,9 +67,10 @@ export default function Explore() {
           } else {
             const postsWithExtras = await Promise.all(
               (postsData || []).map(async (post) => {
+                // is_verified bhi fetch karo
                 const { data: profile } = await supabase
                   .from("profiles")
-                  .select("full_name, username, avatar_url")
+                  .select("full_name, username, avatar_url, is_verified")
                   .eq("id", post.user_id)
                   .single();
 
@@ -124,111 +126,39 @@ export default function Explore() {
 
   const toggleLike = async (postId: string) => {
     if (!currentUserId) return;
-
     const target = posts.find((p: any) => p.id === postId) as any;
     if (!target) return;
-
     const wasLiked = target.likedByMe;
-
     setPosts((prev: any) =>
       prev.map((p: any) =>
         p.id === postId
-          ? {
-              ...p,
-              likedByMe: !wasLiked,
-              likeCount: wasLiked ? p.likeCount - 1 : p.likeCount + 1,
-            }
+          ? { ...p, likedByMe: !wasLiked, likeCount: wasLiked ? p.likeCount - 1 : p.likeCount + 1 }
           : p
       )
     );
-
     if (wasLiked) {
-      const { error } = await supabase
-        .from("likes")
-        .delete()
-        .eq("post_id", postId)
-        .eq("user_id", currentUserId);
-
-      if (error) {
-        console.log("Unlike error:", error.message);
-        setPosts((prev: any) =>
-          prev.map((p: any) =>
-            p.id === postId
-              ? { ...p, likedByMe: true, likeCount: p.likeCount + 1 }
-              : p
-          )
-        );
-      }
+      await supabase.from("likes").delete().eq("post_id", postId).eq("user_id", currentUserId);
     } else {
-      const { error } = await supabase
-        .from("likes")
-        .insert({ post_id: postId, user_id: currentUserId });
-
-      if (error) {
-        console.log("Like error:", error.message);
-        setPosts((prev: any) =>
-          prev.map((p: any) =>
-            p.id === postId
-              ? { ...p, likedByMe: false, likeCount: p.likeCount - 1 }
-              : p
-          )
-        );
-      }
+      await supabase.from("likes").insert({ post_id: postId, user_id: currentUserId });
     }
   };
 
   const toggleRepost = async (postId: string) => {
     if (!currentUserId) return;
-
     const target = posts.find((p: any) => p.id === postId) as any;
     if (!target) return;
-
     const wasReposted = target.repostedByMe;
-
     setPosts((prev: any) =>
       prev.map((p: any) =>
         p.id === postId
-          ? {
-              ...p,
-              repostedByMe: !wasReposted,
-              repostCount: wasReposted ? p.repostCount - 1 : p.repostCount + 1,
-            }
+          ? { ...p, repostedByMe: !wasReposted, repostCount: wasReposted ? p.repostCount - 1 : p.repostCount + 1 }
           : p
       )
     );
-
     if (wasReposted) {
-      const { error } = await supabase
-        .from("reposts")
-        .delete()
-        .eq("post_id", postId)
-        .eq("user_id", currentUserId);
-
-      if (error) {
-        console.log("Remove repost error:", error.message);
-        setPosts((prev: any) =>
-          prev.map((p: any) =>
-            p.id === postId
-              ? { ...p, repostedByMe: true, repostCount: p.repostCount + 1 }
-              : p
-          )
-        );
-      }
+      await supabase.from("reposts").delete().eq("post_id", postId).eq("user_id", currentUserId);
     } else {
-      const { error } = await supabase
-        .from("reposts")
-        .insert({ post_id: postId, user_id: currentUserId, original_user_id: target.user_id });
-
-      if (error) {
-        console.log("Repost error:", error.message);
-        setPosts((prev: any) =>
-          prev.map((p: any) =>
-            p.id === postId
-              ? { ...p, repostedByMe: false, repostCount: p.repostCount - 1 }
-              : p
-          )
-        );
-      }
+      await supabase.from("reposts").insert({ post_id: postId, user_id: currentUserId, original_user_id: target.user_id });
     }
   };
 
@@ -248,9 +178,11 @@ export default function Explore() {
             <Text style={styles.fullName} numberOfLines={1}>
               {item.profiles?.full_name || item.profiles?.username || "User"}
             </Text>
+            {/* Username ke baad blue tick */}
             <Text style={styles.handle} numberOfLines={1}>
               @{item.profiles?.username || "user"}
             </Text>
+            {item.profiles?.is_verified && <VerifiedBadge size={13} />}
           </View>
 
           {item.caption ? (
@@ -286,12 +218,7 @@ export default function Explore() {
             color={item.repostedByMe ? "#00c853" : "#888"}
           />
           {item.repostCount > 0 && (
-            <Text
-              style={[
-                styles.likeCount,
-                item.repostedByMe && styles.repostCountActive,
-              ]}
-            >
+            <Text style={[styles.likeCount, item.repostedByMe && styles.repostCountActive]}>
               {item.repostCount}
             </Text>
           )}
@@ -307,12 +234,7 @@ export default function Explore() {
             color={item.likedByMe ? "#ff3b5c" : "#888"}
           />
           {item.likeCount > 0 && (
-            <Text
-              style={[
-                styles.likeCount,
-                item.likedByMe && styles.likeCountActive,
-              ]}
-            >
+            <Text style={[styles.likeCount, item.likedByMe && styles.likeCountActive]}>
               {item.likeCount}
             </Text>
           )}
@@ -326,10 +248,7 @@ export default function Explore() {
 
   return (
     <SafeAreaView style={styles.container}>
-
-      {/* TOP ROW: Add button | SYBLUSH centered | notification + message */}
       <View style={styles.topRow}>
-
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() => router.push("/create-post")}
@@ -338,7 +257,6 @@ export default function Explore() {
           <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
 
-        {/* Absolutely centered SYBLUSH */}
         <Text style={styles.syblushTitle}>SYBLUSH</Text>
 
         <View style={styles.topRowRight}>
@@ -367,7 +285,6 @@ export default function Explore() {
         </View>
       </View>
 
-      {/* TABS */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={styles.tabItem}

@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import VerifiedBadge from "../components/verified-badge";
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -32,6 +33,7 @@ export default function Profile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [posts, setPosts] = useState([]);
   const [postsCount, setPostsCount] = useState(0);
+  const [isVerified, setIsVerified] = useState(false);
 
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -39,7 +41,7 @@ export default function Profile() {
 
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, username, avatar_url, bio")
+      .select("full_name, username, avatar_url, bio, is_verified")
       .eq("id", user.id)
       .single();
 
@@ -52,6 +54,7 @@ export default function Profile() {
       } else {
         setProfileImage(null);
       }
+      setIsVerified(data.is_verified ?? false);
     }
 
     const { count: followers } = await supabase
@@ -92,14 +95,11 @@ export default function Profile() {
 
         <View style={styles.headerTextCol}>
           <View style={styles.nameRow}>
-            <Text style={styles.fullName} numberOfLines={1}>
-              {name}
-            </Text>
-            <Text style={styles.handle} numberOfLines={1}>
-              @{username}
-            </Text>
+            <Text style={styles.fullName} numberOfLines={1}>{name}</Text>
+            {/* Post mein username ke baad tick */}
+            <Text style={styles.handle} numberOfLines={1}>@{username}</Text>
+            {isVerified && <VerifiedBadge size={13} />}
           </View>
-
           {item.caption ? (
             <Text style={styles.caption}>{item.caption}</Text>
           ) : null}
@@ -148,7 +148,13 @@ export default function Profile() {
               >
                 <Ionicons name="add" size={18} color="#fff" />
               </TouchableOpacity>
-              <Text style={styles.title}>@{username}</Text>
+
+              {/* Top bar mein @username + tick */}
+              <View style={styles.topBarUsername}>
+                <Text style={styles.title}>@{username}</Text>
+                {isVerified && <VerifiedBadge size={14} />}
+              </View>
+
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => router.push("/settings")}
@@ -190,6 +196,7 @@ export default function Profile() {
               </View>
             </View>
 
+            {/* Bio section - sirf naam, tick nahi */}
             <View style={styles.bioSection}>
               <Text style={styles.name}>{name}</Text>
               {bio ? <Text style={styles.bio}>{bio}</Text> : null}
@@ -236,7 +243,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#111",
   },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center", flex: 1 },
+  topBarUsername: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+  },
+  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center" },
   iconBtn: {
     width: 32,
     height: 32,
@@ -268,6 +281,12 @@ const styles = StyleSheet.create({
   statNumber: { color: "#fff", fontSize: 16, fontWeight: "700" },
   statLabel: { color: "#666", fontSize: 11, marginTop: 2 },
   bioSection: { paddingHorizontal: 16, marginBottom: 12 },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 4,
+  },
   name: { color: "#fff", fontSize: 13, fontWeight: "600" },
   bio: { color: "#aaa", fontSize: 12, marginTop: 4, lineHeight: 18 },
   buttonRow: { paddingHorizontal: 16, marginBottom: 12 },
@@ -280,8 +299,6 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   editButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-
-  // ✅ X-style feed post card (same as explore.tsx)
   postCard: {
     paddingHorizontal: CARD_PADDING,
     paddingTop: 12,
@@ -311,12 +328,6 @@ const styles = StyleSheet.create({
     borderRadius: AVATAR_SIZE / 2,
   },
   headerTextCol: { flex: 1 },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginBottom: 4,
-  },
   fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
   handle: { color: "#777", fontSize: 13, flexShrink: 1 },
   caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
@@ -339,7 +350,6 @@ const styles = StyleSheet.create({
     marginLeft: IMAGE_LEFT_INSET,
   },
   actionItem: { padding: 2 },
-
   emptyContainer: { paddingTop: 40, alignItems: "center" },
   emptyText: { color: "#555", fontSize: 13 },
   modalOverlay: {
