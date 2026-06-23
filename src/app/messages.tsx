@@ -5,11 +5,13 @@ import {
   FlatList,
   Image,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Svg, { Circle, Line } from "react-native-svg";
 import { supabase } from "../lib/supabase";
 
 type Conversation = {
@@ -22,23 +24,53 @@ type Conversation = {
   unread: boolean;
 };
 
+type FollowedUser = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  full_name: string;
+};
+
 export default function Messages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [followedUsers, setFollowedUsers] = useState<FollowedUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string>("");
 
-  const loadConversations = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
-    setCurrentUserId(user.id);
+
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .single();
+    if (myProfile?.username) setCurrentUsername(myProfile.username);
+
+    const { data: followsData } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", user.id);
+
+    if (followsData && followsData.length > 0) {
+      const followingIds = followsData.map((f) => f.following_id);
+      const { data: followedProfiles } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url, full_name")
+        .in("id", followingIds);
+      setFollowedUsers(followedProfiles ?? []);
+    }
+
     const { data: messages, error } = await supabase
       .from("messages")
       .select("id, sender_id, receiver_id, content, created_at, read")
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .order("created_at", { ascending: false });
-    if (error) { console.log(error.message); setLoading(false); return; }
-    if (!messages || messages.length === 0) { setConversations([]); setLoading(false); return; }
+
+    if (error || !messages) { setLoading(false); return; }
+
     const conversationMap = new Map();
     for (const msg of messages) {
       const otherUserId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
@@ -50,22 +82,34 @@ export default function Messages() {
         });
       }
     }
+
     const otherUserIds = Array.from(conversationMap.keys());
-    const { data: profiles, error: profilesError } = await supabase
+    if (otherUserIds.length === 0) { setConversations([]); setLoading(false); return; }
+
+    const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name, username, avatar_url")
       .in("id", otherUserIds);
-    if (profilesError) { console.log(profilesError.message); setLoading(false); return; }
+
     const result = (profiles ?? []).map((p) => {
       const convo = conversationMap.get(p.id);
-      return { otherUserId: p.id, full_name: p.full_name, username: p.username, avatar_url: p.avatar_url, lastMessage: convo.lastMessage, lastMessageTime: convo.lastMessageTime, unread: convo.unread };
+      return {
+        otherUserId: p.id,
+        full_name: p.full_name,
+        username: p.username,
+        avatar_url: p.avatar_url,
+        lastMessage: convo.lastMessage,
+        lastMessageTime: convo.lastMessageTime,
+        unread: convo.unread,
+      };
     });
+
     result.sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
     setConversations(result);
     setLoading(false);
   }, []);
 
-  useFocusEffect(useCallback(() => { loadConversations(); }, [loadConversations]));
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -95,7 +139,9 @@ export default function Messages() {
       )}
       <View style={styles.info}>
         <Text style={styles.name}>{item.full_name}</Text>
-        <Text style={[styles.lastMessage, item.unread && styles.lastMessageUnread]} numberOfLines={1}>{item.lastMessage}</Text>
+        <Text style={[styles.lastMessage, item.unread && styles.lastMessageUnread]} numberOfLines={1}>
+          {item.lastMessage}
+        </Text>
       </View>
       <View style={styles.rightSide}>
         <Text style={styles.time}>{formatTime(item.lastMessageTime)}</Text>
@@ -106,12 +152,66 @@ export default function Messages() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+
+      {/* TOP HEADER - back + username center */}
+      <View style={styles.headerTop}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backText}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Messages</Text>
+        <Text style={styles.title}>
+          {currentUsername ? currentUsername : "Messages"}
+        </Text>
+        <View style={{ width: 32 }} />
       </View>
+
+      {/* SEARCH BAR - Instagram style */}
+      <View style={styles.searchBarContainer}>
+        <TouchableOpacity
+          style={styles.searchBar}
+          onPress={() => router.push("/search" as any)}
+          activeOpacity={0.7}
+        >
+          <Svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <Circle cx="11" cy="11" r="8" />
+            <Line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </Svg>
+          <Text style={styles.searchBarPlaceholder}>Search</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* FOLLOWED USERS - stories style */}
+      {followedUsers.length > 0 && (
+        <View style={styles.storiesSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.storiesScroll}
+          >
+            {followedUsers.map((u) => (
+              <TouchableOpacity
+                key={u.id}
+                style={styles.storyItem}
+                onPress={() => router.push(("/chat?id=" + u.id + "&name=" + encodeURIComponent(u.full_name)) as any)}
+              >
+                {u.avatar_url ? (
+                  <Image source={{ uri: u.avatar_url }} style={styles.storyAvatar} />
+                ) : (
+                  <View style={styles.storyAvatarPlaceholder}>
+                    <Text style={styles.storyAvatarText}>
+                      {u.full_name?.charAt(0)?.toUpperCase() ?? "?"}
+                    </Text>
+                  </View>
+                )}
+                <Text style={styles.storyUsername} numberOfLines={1}>
+                  {u.username ?? u.full_name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* MESSAGES LIST */}
       {loading && <ActivityIndicator color="#fff" style={{ marginTop: 30 }} />}
       {!loading && conversations.length === 0 && (
         <View style={styles.emptyContainer}>
@@ -135,14 +235,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     paddingTop: 8,
   },
-  header: {
+  headerTop: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#111",
-    marginBottom: 4,
   },
   backButton: {
     width: 32,
@@ -153,7 +251,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#222",
-    marginRight: 12,
   },
   backText: {
     color: "#fff",
@@ -162,8 +259,70 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#fff",
-    fontSize: 17,
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+    flex: 1,
+  },
+  searchBarContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  searchBarPlaceholder: {
+    color: "#555",
+    fontSize: 14,
+  },
+  storiesSection: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
+    paddingVertical: 12,
+  },
+  storiesScroll: {
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  storyItem: {
+    alignItems: "center",
+    width: 64,
+  },
+  storyAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: "#e91e8c",
+  },
+  storyAvatarPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#1a1a1a",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#e91e8c",
+  },
+  storyAvatarText: {
+    color: "#fff",
+    fontSize: 20,
     fontWeight: "600",
+  },
+  storyUsername: {
+    color: "#aaa",
+    fontSize: 11,
+    marginTop: 4,
+    textAlign: "center",
   },
   emptyContainer: {
     alignItems: "center",
