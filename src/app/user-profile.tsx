@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import VerifiedBadge from "../components/verified-badge";
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -29,6 +30,7 @@ type Profile = {
   username: string;
   avatar_url: string | null;
   bio: string | null;
+  is_verified: boolean;
 };
 
 export default function UserProfile() {
@@ -54,7 +56,7 @@ export default function UserProfile() {
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, username, avatar_url, bio")
+      .select("id, full_name, username, avatar_url, bio, is_verified")
       .eq("id", id)
       .single();
 
@@ -174,6 +176,7 @@ export default function UserProfile() {
             <Text style={styles.handle} numberOfLines={1}>
               @{profile.username}
             </Text>
+            {profile.is_verified && <VerifiedBadge />}
           </View>
 
           {item.caption ? (
@@ -221,7 +224,10 @@ export default function UserProfile() {
               <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
                 <Ionicons name="chevron-back" size={20} color="#fff" />
               </TouchableOpacity>
-              <Text style={styles.title}>@{profile.username}</Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.title}>@{profile.username}</Text>
+                {profile.is_verified && <VerifiedBadge />}
+              </View>
               <View style={styles.iconBtn} />
             </View>
 
@@ -320,7 +326,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#111",
   },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center", flex: 1 },
+  titleRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center" },
   iconBtn: {
     width: 32,
     height: 32,
