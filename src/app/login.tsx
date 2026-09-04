@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 export default function Login() {
+  const { colors } = useTheme();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
@@ -68,48 +70,54 @@ export default function Login() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.formContainer}>
-        <Text style={styles.logo}>SYBLUSH</Text>
-        <Text style={styles.heading}>Login</Text>
+        <Text style={[styles.logo, { color: colors.text }]}>SYBLUSH</Text>
+        <Text style={[styles.heading, { color: colors.subtext }]}>Login</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           placeholder="Email or Username"
-          placeholderTextColor="#444"
+          placeholderTextColor={colors.subtextAlt}
           autoCapitalize="none"
           value={identifier}
           onChangeText={setIdentifier}
         />
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           placeholder="Password"
-          placeholderTextColor="#444"
+          placeholderTextColor={colors.subtextAlt}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.text }]}
+          onPress={handleLogin}
+        >
+          <Text style={[styles.buttonText, { color: colors.background }]}>Login</Text>
         </TouchableOpacity>
 
         <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[styles.dividerText, { color: colors.subtextAlt }]}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
         </View>
 
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-          <Text style={styles.googleIcon}>G</Text>
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        <TouchableOpacity
+          style={[styles.googleButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={handleGoogleLogin}
+        >
+          <Text style={[styles.googleIcon, { color: colors.text }]}>G</Text>
+          <Text style={[styles.googleButtonText, { color: colors.subtext }]}>Continue with Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/signup")} style={styles.linkRow}>
-          <Text style={styles.linkText}>
+          <Text style={[styles.linkText, { color: colors.subtextAlt }]}>
             Don't have an account?{" "}
-            <Text style={styles.linkBold}>Create Account</Text>
+            <Text style={[styles.linkBold, { color: colors.subtext }]}>Create Account</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -120,7 +128,6 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
@@ -130,7 +137,6 @@ const styles = StyleSheet.create({
     maxWidth: 340,
   },
   logo: {
-    color: "#fff",
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
@@ -138,31 +144,25 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
   },
   heading: {
-    color: "#555",
     fontSize: 14,
     textAlign: "center",
     marginBottom: 20,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: "#0d0d0d",
-    color: "#fff",
     padding: 12,
     borderRadius: 10,
     marginBottom: 10,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: "#1e1e1e",
   },
   button: {
-    backgroundColor: "#fff",
     padding: 13,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 4,
   },
   buttonText: {
-    color: "#000",
     fontSize: 14,
     fontWeight: "bold",
     letterSpacing: 0.5,
@@ -175,10 +175,8 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#1a1a1a",
   },
   dividerText: {
-    color: "#444",
     marginHorizontal: 10,
     fontSize: 12,
   },
@@ -186,20 +184,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0d0d0d",
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#222",
   },
   googleIcon: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "bold",
     marginRight: 8,
   },
   googleButtonText: {
-    color: "#aaa",
     fontSize: 13,
     fontWeight: "500",
   },
@@ -208,11 +202,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkText: {
-    color: "#444",
     fontSize: 12,
   },
   linkBold: {
-    color: "#888",
     fontWeight: "600",
   },
 });

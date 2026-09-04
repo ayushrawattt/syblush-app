@@ -17,9 +17,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 export default function EditProfile() {
+  const { colors } = useTheme();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -223,12 +225,15 @@ export default function EditProfile() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>{"<"}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backText, { color: colors.text }]}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Edit Profile</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -237,55 +242,59 @@ export default function EditProfile() {
           {image ? (
             <Image source={{ uri: image }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarText}>+</Text>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.avatarText, { color: colors.text }]}>+</Text>
             </View>
           )}
           <Text style={styles.changePhoto}>Change Photo</Text>
         </TouchableOpacity>
 
-        <Text style={styles.label}>Full Name</Text>
+        <Text style={[styles.label, { color: colors.subtext }]}>Full Name</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           value={name}
           onChangeText={setName}
           placeholder="Full Name"
-          placeholderTextColor="#555"
+          placeholderTextColor={colors.subtextAlt}
           autoCapitalize="words"
         />
 
-        <Text style={styles.label}>Username</Text>
+        <Text style={[styles.label, { color: colors.subtext }]}>Username</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           value={username}
           onChangeText={(text) => setUsername(text.toLowerCase().replace(/[^a-z0-9._]/g, ""))}
           placeholder="Username"
-          placeholderTextColor="#555"
+          placeholderTextColor={colors.subtextAlt}
           autoCapitalize="none"
           autoCorrect={false}
         />
 
-        <Text style={styles.label}>Bio</Text>
+        <Text style={[styles.label, { color: colors.subtext }]}>Bio</Text>
         <TextInput
-          style={[styles.input, styles.bioInput]}
+          style={[styles.input, styles.bioInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           value={bio}
           onChangeText={setBio}
           placeholder="Write something about yourself..."
-          placeholderTextColor="#555"
+          placeholderTextColor={colors.subtextAlt}
           multiline
           maxLength={150}
         />
-        <Text style={styles.charCount}>{bio.length}/150</Text>
+        <Text style={[styles.charCount, { color: colors.subtextAlt }]}>{bio.length}/150</Text>
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: colors.text },
+            loading && styles.buttonDisabled,
+          ]}
           onPress={saveProfile}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#000" />
+            <ActivityIndicator color={colors.background} />
           ) : (
-            <Text style={styles.buttonText}>Save Changes</Text>
+            <Text style={[styles.buttonText, { color: colors.background }]}>Save Changes</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -294,7 +303,7 @@ export default function EditProfile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1 },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -302,20 +311,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
-  title: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  title: { fontSize: 16, fontWeight: "600" },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#222",
   },
-  backText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  backText: { fontSize: 16, fontWeight: "bold" },
   scroll: { alignItems: "center", paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 },
   avatarContainer: { alignItems: "center", marginBottom: 28 },
   avatar: { width: 90, height: 90, borderRadius: 45, marginBottom: 8 },
@@ -323,37 +329,31 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#333",
   },
-  avatarText: { color: "#fff", fontSize: 36, fontWeight: "bold" },
+  avatarText: { fontSize: 36, fontWeight: "bold" },
   changePhoto: { color: "#4a9eff", fontSize: 13, fontWeight: "500" },
-  label: { alignSelf: "flex-start", color: "#888", fontSize: 11, fontWeight: "600", marginBottom: 6, letterSpacing: 0.5 },
+  label: { alignSelf: "flex-start", fontSize: 11, fontWeight: "600", marginBottom: 6, letterSpacing: 0.5 },
   input: {
     width: "100%",
-    backgroundColor: "#0f0f0f",
-    color: "#fff",
     padding: 12,
     borderRadius: 10,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#222",
     fontSize: 14,
   },
   bioInput: { height: 90, textAlignVertical: "top" },
-  charCount: { alignSelf: "flex-end", color: "#444", fontSize: 11, marginTop: -12, marginBottom: 16 },
+  charCount: { alignSelf: "flex-end", fontSize: 11, marginTop: -12, marginBottom: 16 },
   button: {
     width: "100%",
-    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: "#000", fontWeight: "700", fontSize: 15 },
+  buttonText: { fontWeight: "700", fontSize: 15 },
 });

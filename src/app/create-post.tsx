@@ -11,9 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 export default function CreatePost() {
+  const { colors } = useTheme();
   const [image, setImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
@@ -93,18 +95,22 @@ export default function CreatePost() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TouchableOpacity
+        style={[styles.imagePicker, { backgroundColor: colors.card }]}
+        onPress={pickImage}
+      >
         {image ? (
           <Image source={{ uri: image }} style={styles.image} />
         ) : (
-          <Text style={styles.imagePickerText}>Tap to select a photo</Text>
+          <Text style={[styles.imagePickerText, { color: colors.subtextAlt }]}>Tap to select a photo</Text>
         )}
       </TouchableOpacity>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { borderColor: colors.border, color: colors.text }]}
         placeholder="Write a caption..."
+        placeholderTextColor={colors.subtextAlt}
         value={caption}
         onChangeText={setCaption}
         multiline
@@ -125,28 +131,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fff",
   },
   imagePicker: {
     width: "100%",
     height: 300,
-    backgroundColor: "#eee",
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
     overflow: "hidden",
   },
-  imagePickerText: {
-    color: "#888",
-  },
+  imagePickerText: {},
   image: {
     width: "100%",
     height: "100%",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
     minHeight: 60,

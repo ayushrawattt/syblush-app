@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import VerifiedBadge from "../components/verified-badge";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -34,6 +35,7 @@ type Profile = {
 };
 
 export default function UserProfile() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -134,23 +136,26 @@ export default function UserProfile() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator color="#fff" style={{ marginTop: 100 }} />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.text} style={{ marginTop: 100 }} />
       </SafeAreaView>
     );
   }
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={20} color="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Profile</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
           <View style={styles.iconBtn} />
         </View>
-        <Text style={styles.notFound}>User not found.</Text>
+        <Text style={[styles.notFound, { color: colors.subtextAlt }]}>User not found.</Text>
       </SafeAreaView>
     );
   }
@@ -158,34 +163,34 @@ export default function UserProfile() {
   const isOwnProfile = currentUserId === id;
 
   const renderPost = ({ item }: any) => (
-    <View style={styles.postCard}>
+    <View style={[styles.postCard, { borderBottomColor: colors.border }]}>
       <View style={styles.postHeader}>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.cardAlt }]}>
           {profile.avatar_url ? (
             <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
           ) : (
-            <Ionicons name="person" size={16} color="#666" />
+            <Ionicons name="person" size={16} color={colors.subtextAlt} />
           )}
         </View>
 
         <View style={styles.headerTextCol}>
           <View style={styles.nameRow}>
-            <Text style={styles.fullName} numberOfLines={1}>
+            <Text style={[styles.fullName, { color: colors.text }]} numberOfLines={1}>
               {profile.full_name}
             </Text>
-            <Text style={styles.handle} numberOfLines={1}>
+            <Text style={[styles.handle, { color: colors.subtext }]} numberOfLines={1}>
               @{profile.username}
             </Text>
             {profile.is_verified && <VerifiedBadge />}
           </View>
 
           {item.caption ? (
-            <Text style={styles.caption}>{item.caption}</Text>
+            <Text style={[styles.caption, { color: colors.text }]}>{item.caption}</Text>
           ) : null}
         </View>
       </View>
 
-      <View style={styles.imageWrapper}>
+      <View style={[styles.imageWrapper, { backgroundColor: colors.card, borderColor: colors.borderAlt }]}>
         <Image
           source={{ uri: item.image_url }}
           style={styles.postImage}
@@ -195,23 +200,23 @@ export default function UserProfile() {
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="chatbubble-outline" size={16} color="#888" />
+          <Ionicons name="chatbubble-outline" size={16} color={colors.subtext} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="repeat-outline" size={18} color="#888" />
+          <Ionicons name="repeat-outline" size={18} color={colors.subtext} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="heart-outline" size={16} color="#888" />
+          <Ionicons name="heart-outline" size={16} color={colors.subtext} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="share-outline" size={16} color="#888" />
+          <Ionicons name="share-outline" size={16} color={colors.subtext} />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -220,12 +225,15 @@ export default function UserProfile() {
         contentContainerStyle={{ paddingBottom: 80 }}
         ListHeaderComponent={
           <View style={styles.header}>
-            <View style={styles.topBar}>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-                <Ionicons name="chevron-back" size={20} color="#fff" />
+            <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.back()}
+              >
+                <Ionicons name="chevron-back" size={20} color={colors.text} />
               </TouchableOpacity>
               <View style={styles.titleRow}>
-                <Text style={styles.title}>@{profile.username}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>@{profile.username}</Text>
                 {profile.is_verified && <VerifiedBadge />}
               </View>
               <View style={styles.iconBtn} />
@@ -236,31 +244,31 @@ export default function UserProfile() {
                 {profile.avatar_url ? (
                   <Image source={{ uri: profile.avatar_url }} style={styles.bigAvatar} />
                 ) : (
-                  <View style={styles.bigAvatarPlaceholder}>
-                    <Ionicons name="person" size={28} color="#555" />
+                  <View style={[styles.bigAvatarPlaceholder, { backgroundColor: colors.card }]}>
+                    <Ionicons name="person" size={28} color={colors.subtextAlt} />
                   </View>
                 )}
               </TouchableOpacity>
 
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{postsCount}</Text>
-                  <Text style={styles.statLabel}>Posts</Text>
+                  <Text style={[styles.statNumber, { color: colors.text }]}>{postsCount}</Text>
+                  <Text style={[styles.statLabel, { color: colors.subtextAlt }]}>Posts</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{followersCount}</Text>
-                  <Text style={styles.statLabel}>Followers</Text>
+                  <Text style={[styles.statNumber, { color: colors.text }]}>{followersCount}</Text>
+                  <Text style={[styles.statLabel, { color: colors.subtextAlt }]}>Followers</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{followingCount}</Text>
-                  <Text style={styles.statLabel}>Following</Text>
+                  <Text style={[styles.statNumber, { color: colors.text }]}>{followingCount}</Text>
+                  <Text style={[styles.statLabel, { color: colors.subtextAlt }]}>Following</Text>
                 </View>
               </View>
             </View>
 
             <View style={styles.bioSection}>
-              <Text style={styles.name}>{profile.full_name}</Text>
-              {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+              <Text style={[styles.name, { color: colors.text }]}>{profile.full_name}</Text>
+              {profile.bio ? <Text style={[styles.bio, { color: colors.subtext }]}>{profile.bio}</Text> : null}
             </View>
 
             {!isOwnProfile && (
@@ -268,27 +276,34 @@ export default function UserProfile() {
                 <TouchableOpacity
                   style={[
                     styles.actionButton,
-                    isFollowing ? styles.followingButton : styles.followButton,
+                    isFollowing
+                      ? { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border }
+                      : { backgroundColor: colors.text },
                   ]}
                   onPress={toggleFollow}
                   disabled={followLoading}
                 >
                   {followLoading ? (
-                    <ActivityIndicator color={isFollowing ? "#fff" : "#000"} size="small" />
+                    <ActivityIndicator color={isFollowing ? colors.text : colors.background} size="small" />
                   ) : (
-                    <Text style={isFollowing ? styles.followingButtonText : styles.followButtonText}>
+                    <Text
+                      style={[
+                        styles.followButtonText,
+                        { color: isFollowing ? colors.text : colors.background },
+                      ]}
+                    >
                       {isFollowing ? "Following" : "Follow"}
                     </Text>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.messageButton]}
+                  style={[styles.actionButton, { backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border }]}
                   onPress={() =>
                     router.push(`/chat?id=${profile.id}&name=${encodeURIComponent(profile.full_name)}`)
                   }
                 >
-                  <Text style={styles.messageButtonText}>Message</Text>
+                  <Text style={[styles.messageButtonText, { color: colors.text }]}>Message</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -296,7 +311,7 @@ export default function UserProfile() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No posts yet</Text>
+            <Text style={[styles.emptyText, { color: colors.subtextAlt }]}>No posts yet</Text>
           </View>
         }
       />
@@ -315,7 +330,7 @@ export default function UserProfile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1 },
   header: { paddingTop: 8 },
   topBar: {
     flexDirection: "row",
@@ -324,7 +339,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   titleRow: {
     flex: 1,
@@ -333,16 +347,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 4,
   },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center" },
+  title: { fontSize: 15, fontWeight: "600", textAlign: "center" },
   iconBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#222",
   },
   profileRow: {
     flexDirection: "row",
@@ -356,17 +368,16 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
   },
   statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
   statItem: { alignItems: "center" },
-  statNumber: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  statLabel: { color: "#666", fontSize: 11, marginTop: 2 },
+  statNumber: { fontSize: 16, fontWeight: "700" },
+  statLabel: { fontSize: 11, marginTop: 2 },
   bioSection: { paddingHorizontal: 16, marginBottom: 12 },
-  name: { color: "#fff", fontSize: 13, fontWeight: "600" },
-  bio: { color: "#aaa", fontSize: 12, marginTop: 4, lineHeight: 18 },
+  name: { fontSize: 13, fontWeight: "600" },
+  bio: { fontSize: 12, marginTop: 4, lineHeight: 18 },
   buttonRow: {
     flexDirection: "row",
     gap: 8,
@@ -380,20 +391,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  followButton: { backgroundColor: "#fff" },
-  followButtonText: { color: "#000", fontWeight: "600", fontSize: 13 },
-  followingButton: {
-    backgroundColor: "#1a1a1a",
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  followingButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-  messageButton: {
-    backgroundColor: "#1a1a1a",
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  messageButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  followButtonText: { fontWeight: "600", fontSize: 13 },
+  messageButtonText: { fontWeight: "600", fontSize: 13 },
 
   // ✅ X-style feed post card
   postCard: {
@@ -402,7 +401,6 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     marginBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
@@ -414,7 +412,6 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -431,18 +428,16 @@ const styles = StyleSheet.create({
     gap: 5,
     marginBottom: 4,
   },
-  fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
-  handle: { color: "#777", fontSize: 13, flexShrink: 1 },
-  caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
+  fullName: { fontWeight: "700", fontSize: 14, flexShrink: 1 },
+  handle: { fontSize: 13, flexShrink: 1 },
+  caption: { fontSize: 15, lineHeight: 20 },
   imageWrapper: {
     width: POST_IMAGE_WIDTH,
     height: POST_IMAGE_HEIGHT,
     marginLeft: IMAGE_LEFT_INSET,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#0d0d0d",
     borderWidth: 1,
-    borderColor: "#262626",
   },
   postImage: { width: "100%", height: "100%" },
   actionRow: {
@@ -455,8 +450,8 @@ const styles = StyleSheet.create({
   actionItem: { padding: 2 },
 
   emptyContainer: { paddingTop: 40, alignItems: "center" },
-  emptyText: { color: "#555", fontSize: 13 },
-  notFound: { color: "#666", textAlign: "center", marginTop: 100 },
+  emptyText: { fontSize: 13 },
+  notFound: { textAlign: "center", marginTop: 100 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.9)",

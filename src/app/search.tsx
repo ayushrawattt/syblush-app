@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 type SearchResult = {
@@ -22,6 +23,7 @@ type SearchResult = {
 };
 
 export default function Search() {
+  const { colors } = useTheme();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,50 +51,50 @@ export default function Search() {
 
   const renderItem = ({ item }: { item: SearchResult }) => (
     <TouchableOpacity
-      style={styles.row}
+      style={[styles.row, { borderBottomColor: colors.border }]}
       onPress={() => router.push(`/user-profile?id=${item.id}` as any)}
     >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
       ) : (
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarText}>
+        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.cardAlt }]}>
+          <Text style={[styles.avatarText, { color: colors.text }]}>
             {item.full_name?.charAt(0)?.toUpperCase() ?? "?"}
           </Text>
         </View>
       )}
       <View style={styles.info}>
-        <Text style={styles.name}>{item.full_name}</Text>
-        <Text style={styles.username}>@{item.username}</Text>
+        <Text style={[styles.name, { color: colors.text }]}>{item.full_name}</Text>
+        <Text style={[styles.username, { color: colors.subtextAlt }]}>@{item.username}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
           value={query}
           onChangeText={handleSearch}
           placeholder="Search"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.subtextAlt}
           autoCapitalize="none"
           autoCorrect={false}
           autoFocus
         />
       </View>
-      {loading && <ActivityIndicator color="#fff" style={{ marginTop: 20 }} />}
+      {loading && <ActivityIndicator color={colors.text} style={{ marginTop: 20 }} />}
       {!loading && query.trim() !== "" && results.length === 0 && (
-        <Text style={styles.emptyText}>No users found.</Text>
+        <Text style={[styles.emptyText, { color: colors.subtextAlt }]}>No users found.</Text>
       )}
       <FlatList
         data={results}
@@ -108,7 +110,6 @@ export default function Search() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
     paddingTop: 16,
   },
   header: {
@@ -122,24 +123,18 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#111",
     borderWidth: 1,
-    borderColor: "#222",
     justifyContent: "center",
     alignItems: "center",
   },
   input: {
     flex: 1,
-    backgroundColor: "#111",
-    color: "#fff",
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#222",
     fontSize: 14,
   },
   emptyText: {
-    color: "#666",
     textAlign: "center",
     marginTop: 30,
     fontSize: 14,
@@ -149,7 +144,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   avatar: {
     width: 46,
@@ -161,13 +155,11 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   avatarText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -175,12 +167,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "600",
   },
   username: {
-    color: "#666",
     fontSize: 13,
     marginTop: 2,
   },

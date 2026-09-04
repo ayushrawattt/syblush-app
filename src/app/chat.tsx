@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 type Message = {
@@ -23,6 +24,7 @@ type Message = {
 };
 
 export default function Chat() {
+  const { colors } = useTheme();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -166,8 +168,8 @@ export default function Chat() {
             {otherUserAvatar ? (
               <Image source={{ uri: otherUserAvatar }} style={styles.messageAvatar} />
             ) : (
-              <View style={styles.messageAvatarPlaceholder}>
-                <Text style={styles.messageAvatarText}>
+              <View style={[styles.messageAvatarPlaceholder, { backgroundColor: colors.cardAlt }]}>
+                <Text style={[styles.messageAvatarText, { color: colors.text }]}>
                   {(name ?? "?").charAt(0).toUpperCase()}
                 </Text>
               </View>
@@ -177,10 +179,12 @@ export default function Chat() {
         <View
           style={[
             styles.messageBubble,
-            isMine ? styles.myMessage : styles.theirMessage,
+            isMine
+              ? [styles.myMessage, { backgroundColor: colors.text }]
+              : [styles.theirMessage, { backgroundColor: colors.card, borderColor: colors.border }],
           ]}
         >
-          <Text style={isMine ? styles.myMessageText : styles.theirMessageText}>
+          <Text style={isMine ? [styles.myMessageText, { color: colors.background }] : [styles.theirMessageText, { color: colors.text }]}>
             {item.content}
           </Text>
         </View>
@@ -189,10 +193,13 @@ export default function Chat() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>{"<"}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backText, { color: colors.text }]}>{"<"}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -203,16 +210,16 @@ export default function Chat() {
           {otherUserAvatar ? (
             <Image source={{ uri: otherUserAvatar }} style={styles.headerAvatar} />
           ) : (
-            <View style={styles.headerAvatarPlaceholder}>
-              <Text style={styles.headerAvatarText}>
+            <View style={[styles.headerAvatarPlaceholder, { backgroundColor: colors.cardAlt }]}>
+              <Text style={[styles.headerAvatarText, { color: colors.text }]}>
                 {(name ?? "?").charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
           <View>
-            <Text style={styles.headerName}>{name ?? "Chat"}</Text>
+            <Text style={[styles.headerName, { color: colors.text }]}>{name ?? "Chat"}</Text>
             {otherUserUsername && (
-              <Text style={styles.headerUsername}>@{otherUserUsername}</Text>
+              <Text style={[styles.headerUsername, { color: colors.subtextAlt }]}>@{otherUserUsername}</Text>
             )}
           </View>
         </TouchableOpacity>
@@ -234,24 +241,25 @@ export default function Chat() {
           }
         />
 
-        <View style={styles.inputRow}>
+        <View style={[styles.inputRow, { borderTopColor: colors.border }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
             value={text}
             onChangeText={setText}
             placeholder="Type a message..."
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.subtextAlt}
             multiline
           />
           <TouchableOpacity
             style={[
               styles.sendButton,
+              { backgroundColor: colors.text },
               (!text.trim() || sending) && styles.sendButtonDisabled,
             ]}
             onPress={sendMessage}
             disabled={!text.trim() || sending}
           >
-            <Text style={styles.sendButtonText}>➤</Text>
+            <Text style={[styles.sendButtonText, { color: colors.background }]}>➤</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -262,7 +270,6 @@ export default function Chat() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
   },
   header: {
     flexDirection: "row",
@@ -271,21 +278,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#222",
     marginRight: 12,
   },
   backText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -303,22 +306,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
   },
   headerAvatarText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
   headerName: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
   headerUsername: {
-    color: "#666",
     fontSize: 12,
     marginTop: 1,
   },
@@ -343,12 +342,10 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
   },
   messageAvatarText: {
-    color: "#fff",
     fontSize: 11,
     fontWeight: "bold",
   },
@@ -358,23 +355,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   myMessage: {
-    backgroundColor: "#fff",
     alignSelf: "flex-end",
     borderBottomRightRadius: 4,
   },
   theirMessage: {
-    backgroundColor: "#111",
     alignSelf: "flex-start",
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: "#222",
   },
   myMessageText: {
-    color: "#000",
     fontSize: 14,
   },
   theirMessageText: {
-    color: "#fff",
     fontSize: 14,
   },
   inputRow: {
@@ -382,23 +374,18 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: "#111",
   },
   input: {
     flex: 1,
-    backgroundColor: "#111",
-    color: "#fff",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#222",
     fontSize: 14,
     maxHeight: 100,
     marginRight: 10,
   },
   sendButton: {
-    backgroundColor: "#fff",
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -409,7 +396,6 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   sendButtonText: {
-    color: "#000",
     fontSize: 16,
     fontWeight: "bold",
   },

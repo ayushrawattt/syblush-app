@@ -70,8 +70,11 @@ export default function Settings() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
+      <TouchableOpacity
+        style={[styles.logoutButton, { backgroundColor: colors.text, borderColor: colors.text }]}
+        onPress={handleLogout}
+      >
+        <Text style={[styles.logoutText, { color: colors.background }]}>Logout</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -131,15 +134,12 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     width: 320,
-    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 15,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#000",
   },
   logoutText: {
-    color: "#000",
     fontSize: 16,
     fontWeight: "bold",
   },

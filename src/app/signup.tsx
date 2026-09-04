@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 export default function Signup() {
+  const { colors } = useTheme();
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -66,40 +68,44 @@ export default function Signup() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.formContainer}>
-        <Text style={styles.logo}>SYBLUSH</Text>
+        <Text style={[styles.logo, { color: colors.text }]}>SYBLUSH</Text>
 
         {step === 1 ? (
           <>
-            <Text style={styles.heading}>Choose a Username</Text>
+            <Text style={[styles.heading, { color: colors.text }]}>Choose a Username</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
               placeholder="Username"
-              placeholderTextColor="#444"
+              placeholderTextColor={colors.subtextAlt}
               autoCapitalize="none"
               autoFocus
               value={username}
               onChangeText={setUsername}
             />
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                { backgroundColor: colors.text },
+                loading && { backgroundColor: colors.subtextAlt },
+              ]}
               onPress={handleNextStep}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>
+              <Text style={[styles.buttonText, { color: colors.background }]}>
                 {loading ? "Checking..." : "Next →"}
               </Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <Text style={styles.heading}>Create Account</Text>
-            <Text style={styles.subheading}>@{username}</Text>
+            <Text style={[styles.heading, { color: colors.text }]}>Create Account</Text>
+            <Text style={[styles.subheading, { color: colors.subtext }]}>@{username}</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
               placeholder="Email"
-              placeholderTextColor="#444"
+              placeholderTextColor={colors.subtextAlt}
               autoCapitalize="none"
               keyboardType="email-address"
               autoFocus
@@ -107,24 +113,28 @@ export default function Signup() {
               onChangeText={setEmail}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
               placeholder="Password"
-              placeholderTextColor="#444"
+              placeholderTextColor={colors.subtextAlt}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                { backgroundColor: colors.text },
+                loading && { backgroundColor: colors.subtextAlt },
+              ]}
               onPress={handleSignup}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>
+              <Text style={[styles.buttonText, { color: colors.background }]}>
                 {loading ? "Creating..." : "Create Account"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setStep(1)} style={styles.backRow}>
-              <Text style={styles.backText}>← Back</Text>
+              <Text style={[styles.backText, { color: colors.subtextAlt }]}>← Back</Text>
             </TouchableOpacity>
           </>
         )}
@@ -133,9 +143,9 @@ export default function Signup() {
           onPress={() => router.push("/login")}
           style={styles.linkRow}
         >
-          <Text style={styles.linkText}>
+          <Text style={[styles.linkText, { color: colors.subtextAlt }]}>
             Already have an account?{" "}
-            <Text style={styles.linkBold}>Login</Text>
+            <Text style={[styles.linkBold, { color: colors.subtext }]}>Login</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -146,7 +156,6 @@ export default function Signup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
@@ -156,7 +165,6 @@ const styles = StyleSheet.create({
     maxWidth: 340,
   },
   logo: {
-    color: "#fff",
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
@@ -164,40 +172,30 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
   },
   heading: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
     marginBottom: 20,
   },
   subheading: {
-    color: "#555",
     fontSize: 13,
     textAlign: "center",
     marginBottom: 16,
   },
   input: {
-    backgroundColor: "#0d0d0d",
-    color: "#fff",
     padding: 12,
     borderRadius: 10,
     marginBottom: 10,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: "#1e1e1e",
   },
   button: {
-    backgroundColor: "#fff",
     padding: 13,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 4,
   },
-  buttonDisabled: {
-    backgroundColor: "#444",
-  },
   buttonText: {
-    color: "#000",
     fontSize: 14,
     fontWeight: "bold",
   },
@@ -206,7 +204,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   backText: {
-    color: "#444",
     fontSize: 13,
   },
   linkRow: {
@@ -214,11 +211,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkText: {
-    color: "#444",
     fontSize: 12,
   },
   linkBold: {
-    color: "#888",
     fontWeight: "600",
   },
 });

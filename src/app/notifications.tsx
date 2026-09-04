@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 type NotificationItem = {
@@ -24,6 +25,7 @@ type NotificationItem = {
 };
 
 export default function Notifications() {
+  const { colors } = useTheme();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,25 +100,25 @@ export default function Notifications() {
 
   const renderItem = ({ item }: { item: NotificationItem }) => (
     <TouchableOpacity
-      style={styles.row}
+      style={[styles.row, { borderBottomColor: colors.border }]}
       onPress={() => router.push(`/user-profile?id=${item.actor_id}`)}
     >
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
       ) : (
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarText}>
+        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.cardAlt }]}>
+          <Text style={[styles.avatarText, { color: colors.text }]}>
             {item.full_name?.charAt(0)?.toUpperCase() ?? "?"}
           </Text>
         </View>
       )}
 
       <View style={styles.info}>
-        <Text style={styles.text}>
-          <Text style={styles.name}>{item.full_name}</Text>
+        <Text style={[styles.text, { color: colors.subtext }]}>
+          <Text style={[styles.name, { color: colors.text }]}>{item.full_name}</Text>
           {item.type === "follow" ? " started following you" : " sent you something"}
         </Text>
-        <Text style={styles.time}>{formatTime(item.created_at)}</Text>
+        <Text style={[styles.time, { color: colors.subtextAlt }]}>{formatTime(item.created_at)}</Text>
       </View>
 
       {!item.read && <View style={styles.unreadDot} />}
@@ -124,19 +126,22 @@ export default function Notifications() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>{"<"}</Text>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backText, { color: colors.text }]}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Notifications</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
       </View>
 
-      {loading && <ActivityIndicator color="#fff" style={{ marginTop: 30 }} />}
+      {loading && <ActivityIndicator color={colors.text} style={{ marginTop: 30 }} />}
 
       {!loading && notifications.length === 0 && (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No notifications yet.</Text>
+          <Text style={[styles.emptyText, { color: colors.subtextAlt }]}>No notifications yet.</Text>
         </View>
       )}
 
@@ -153,7 +158,6 @@ export default function Notifications() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
     paddingTop: 60,
   },
   header: {
@@ -166,20 +170,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#222",
     marginRight: 12,
   },
   backText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
   title: {
-    color: "#fff",
     fontSize: 20,
     fontWeight: "bold",
   },
@@ -188,7 +188,6 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   emptyText: {
-    color: "#666",
     fontSize: 14,
   },
   row: {
@@ -196,7 +195,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   avatar: {
     width: 46,
@@ -208,13 +206,11 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   avatarText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -222,16 +218,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   text: {
-    color: "#ccc",
     fontSize: 14,
     lineHeight: 19,
   },
   name: {
-    color: "#fff",
     fontWeight: "600",
   },
   time: {
-    color: "#666",
     fontSize: 12,
     marginTop: 3,
   },
