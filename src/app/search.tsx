@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -70,11 +71,19 @@ export default function Search() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+
         <TextInput
           style={styles.input}
           value={query}
           onChangeText={handleSearch}
-          placeholder="Search by name or username"
+          placeholder="Search"
           placeholderTextColor="#666"
           autoCapitalize="none"
           autoCorrect={false}
@@ -107,6 +116,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 10,
+    gap: 10,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#111",
+    borderWidth: 1,
+    borderColor: "#222",
+    justifyContent: "center",
+    alignItems: "center",
   },
   input: {
     flex: 1,
