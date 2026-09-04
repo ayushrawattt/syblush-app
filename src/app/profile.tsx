@@ -7,7 +7,6 @@ import {
   Image,
   Modal,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -211,7 +210,7 @@ export default function Profile() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Full post modal - jab grid image tap ho */}
+      {/* Full post modal - jab grid image tap ho, saari posts scrollable */}
       <Modal visible={!!selectedPost} transparent={false} animationType="slide">
         <SafeAreaView style={styles.fullPostContainer}>
           <View style={styles.fullPostTopBar}>
@@ -221,17 +220,15 @@ export default function Profile() {
             >
               <Ionicons name="close" size={20} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.fullPostTitle}>Post</Text>
-            <TouchableOpacity
-              onPress={() => selectedPost && setMenuPostId(selectedPost.id)}
-              style={styles.iconBtn}
-            >
-              <Ionicons name="ellipsis-horizontal" size={18} color="#fff" />
-            </TouchableOpacity>
+            <Text style={styles.fullPostTitle}>Posts</Text>
+            <View style={{ width: 32 }} />
           </View>
 
-          {selectedPost && (
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          <FlatList
+            data={posts}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            renderItem={({ item }) => (
               <View style={styles.postCard}>
                 <View style={styles.postHeader}>
                   <View style={styles.avatar}>
@@ -248,15 +245,23 @@ export default function Profile() {
                       <Text style={styles.handle} numberOfLines={1}>@{username}</Text>
                       {isVerified && <VerifiedBadge size={13} />}
                     </View>
-                    {selectedPost.caption ? (
-                      <Text style={styles.caption}>{selectedPost.caption}</Text>
+                    {item.caption ? (
+                      <Text style={styles.caption}>{item.caption}</Text>
                     ) : null}
                   </View>
+
+                  <TouchableOpacity
+                    style={styles.moreBtn}
+                    onPress={() => setMenuPostId(item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="ellipsis-horizontal" size={18} color="#888" />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.imageWrapper}>
                   <Image
-                    source={{ uri: selectedPost.image_url }}
+                    source={{ uri: item.image_url }}
                     style={styles.postImage}
                     resizeMode="cover"
                   />
@@ -277,8 +282,8 @@ export default function Profile() {
                   </TouchableOpacity>
                 </View>
               </View>
-            </ScrollView>
-          )}
+            )}
+          />
         </SafeAreaView>
       </Modal>
 
@@ -414,6 +419,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: CARD_PADDING,
     paddingTop: 12,
     paddingBottom: 14,
+    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
@@ -439,6 +447,9 @@ const styles = StyleSheet.create({
   fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
   handle: { color: "#777", fontSize: 13, flexShrink: 1 },
   caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
+  moreBtn: {
+    padding: 4,
+  },
   imageWrapper: {
     width: POST_IMAGE_WIDTH,
     height: POST_IMAGE_HEIGHT,
