@@ -263,7 +263,7 @@ export default function Explore() {
           activeOpacity={0.7}
         >
           <Ionicons name="search" size={14} color="#888" />
-          <Text style={styles.searchBarText}>Search Syblush</Text>
+          <Text style={styles.searchBarText}>Search </Text>
         </TouchableOpacity>
 
         <View style={styles.topRowRight}>
