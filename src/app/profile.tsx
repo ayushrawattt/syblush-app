@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -84,29 +83,16 @@ export default function Profile() {
 
   useFocusEffect(useCallback(() => { loadProfile(); }, []));
 
-  const handleDeletePost = (postId: string) => {
+  const handleDeletePost = async (postId: string) => {
     setMenuPostId(null);
-    Alert.alert(
-      "Delete Post",
-      "Are you sure you want to delete this post? This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            const { error } = await supabase.from("posts").delete().eq("id", postId);
-            if (error) {
-              console.log("Delete error:", error.message);
-              Alert.alert("Error", "Could not delete post. Please try again.");
-            } else {
-              setPosts((prev: any) => prev.filter((p: any) => p.id !== postId));
-              setPostsCount((prev) => Math.max(0, prev - 1));
-            }
-          },
-        },
-      ]
-    );
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
+    if (error) {
+      console.log("Delete error:", error.message);
+      window.alert("Delete failed: " + error.message);
+    } else {
+      setPosts((prev: any) => prev.filter((p: any) => p.id !== postId));
+      setPostsCount((prev) => Math.max(0, prev - 1));
+    }
   };
 
   const renderPost = ({ item }: any) => (
