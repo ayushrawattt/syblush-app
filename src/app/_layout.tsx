@@ -2,6 +2,7 @@ import { Stack, usePathname, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import AppTabs from "../components/app-tabs.web";
+import { ThemeProvider } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 export default function Layout() {
@@ -35,9 +36,9 @@ export default function Layout() {
   }
 
   return (
-    <>
+    <ThemeProvider>
       <Stack screenOptions={{ headerShown: false }} />
       {Platform.OS === "web" && !hideNav && <AppTabs />}
-    </>
+    </ThemeProvider>
   );
 }
