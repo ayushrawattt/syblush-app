@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -34,6 +35,7 @@ export default function Profile() {
   const [posts, setPosts] = useState([]);
   const [postsCount, setPostsCount] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
+  const [menuPostId, setMenuPostId] = useState<string | null>(null);
 
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -82,6 +84,31 @@ export default function Profile() {
 
   useFocusEffect(useCallback(() => { loadProfile(); }, []));
 
+  const handleDeletePost = (postId: string) => {
+    setMenuPostId(null);
+    Alert.alert(
+      "Delete Post",
+      "Are you sure you want to delete this post? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase.from("posts").delete().eq("id", postId);
+            if (error) {
+              console.log("Delete error:", error.message);
+              Alert.alert("Error", "Could not delete post. Please try again.");
+            } else {
+              setPosts((prev: any) => prev.filter((p: any) => p.id !== postId));
+              setPostsCount((prev) => Math.max(0, prev - 1));
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderPost = ({ item }: any) => (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
@@ -104,6 +131,14 @@ export default function Profile() {
             <Text style={styles.caption}>{item.caption}</Text>
           ) : null}
         </View>
+
+        <TouchableOpacity
+          style={styles.moreBtn}
+          onPress={() => setMenuPostId(item.id)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="ellipsis-horizontal" size={18} color="#888" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.imageWrapper}>
@@ -227,6 +262,30 @@ export default function Profile() {
           <Image source={{ uri: profileImage || "" }} style={styles.modalImage} />
         </TouchableOpacity>
       </Modal>
+
+      <Modal visible={!!menuPostId} transparent={true} animationType="fade">
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => setMenuPostId(null)}
+        >
+          <View style={styles.menuBox}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => menuPostId && handleDeletePost(menuPostId)}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ff3b30" />
+              <Text style={styles.menuItemDeleteText}>Delete Post</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuCancel}
+              onPress={() => setMenuPostId(null)}
+            >
+              <Text style={styles.menuCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -331,6 +390,9 @@ const styles = StyleSheet.create({
   fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
   handle: { color: "#777", fontSize: 13, flexShrink: 1 },
   caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
+  moreBtn: {
+    padding: 4,
+  },
   imageWrapper: {
     width: POST_IMAGE_WIDTH,
     height: POST_IMAGE_HEIGHT,
@@ -359,4 +421,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalImage: { width: 300, height: 300, borderRadius: 16 },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+  },
+  menuBox: {
+    backgroundColor: "#111",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 20,
+    paddingTop: 8,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#222",
+  },
+  menuItemDeleteText: {
+    color: "#ff3b30",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  menuCancel: {
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  menuCancelText: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "500",
+  },
 });
