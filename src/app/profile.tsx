@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import VerifiedBadge from "../components/verified-badge";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -28,6 +29,7 @@ const GRID_GAP = 2;
 const GRID_ITEM_SIZE = (SCREEN_WIDTH - GRID_GAP * 2) / 3;
 
 export default function Profile() {
+  const { colors } = useTheme();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -109,7 +111,7 @@ export default function Profile() {
 
   const renderGridItem = ({ item }: any) => (
     <TouchableOpacity
-      style={styles.gridItem}
+      style={[styles.gridItem, { backgroundColor: colors.card }]}
       activeOpacity={0.8}
       onPress={() => setSelectedPost(item)}
     >
@@ -119,14 +121,14 @@ export default function Profile() {
 
   if (profileLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator color="#fff" size="large" />
+      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.text} size="large" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -138,25 +140,24 @@ export default function Profile() {
         ItemSeparatorComponent={() => <View style={{ height: GRID_GAP }} />}
         ListHeaderComponent={
           <View style={styles.header}>
-            <View style={styles.topBar}>
+            <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
-                style={styles.iconBtn}
+                style={[styles.iconBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
                 onPress={() => router.push("/create-post")}
               >
-                <Ionicons name="add" size={18} color="#fff" />
+                <Ionicons name="add" size={18} color={colors.text} />
               </TouchableOpacity>
 
-              {/* Top bar mein @username + tick */}
               <View style={styles.topBarUsername}>
-                <Text style={styles.title}>@{username}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>@{username}</Text>
                 {isVerified && <VerifiedBadge size={14} />}
               </View>
 
               <TouchableOpacity
-                style={styles.iconBtn}
+                style={[styles.iconBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
                 onPress={() => router.push("/settings")}
               >
-                <Ionicons name="menu-outline" size={20} color="#fff" />
+                <Ionicons name="menu-outline" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -165,53 +166,52 @@ export default function Profile() {
                 {profileImage ? (
                   <Image source={{ uri: profileImage }} style={styles.bigAvatar} />
                 ) : (
-                  <View style={styles.bigAvatarPlaceholder}>
-                    <Ionicons name="person" size={28} color="#555" />
+                  <View style={[styles.bigAvatarPlaceholder, { backgroundColor: colors.card }]}>
+                    <Ionicons name="person" size={28} color={colors.subtextAlt} />
                   </View>
                 )}
               </TouchableOpacity>
 
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{postsCount}</Text>
-                  <Text style={styles.statLabel}>Posts</Text>
+                  <Text style={[styles.statNumber, { color: colors.text }]}>{postsCount}</Text>
+                  <Text style={[styles.statLabel, { color: colors.subtextAlt }]}>Posts</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.statItem}
                   onPress={() => router.push("/follow-list?type=followers")}
                 >
-                  <Text style={styles.statNumber}>{followersCount}</Text>
-                  <Text style={styles.statLabel}>Followers</Text>
+                  <Text style={[styles.statNumber, { color: colors.text }]}>{followersCount}</Text>
+                  <Text style={[styles.statLabel, { color: colors.subtextAlt }]}>Followers</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.statItem}
                   onPress={() => router.push("/follow-list?type=following")}
                 >
-                  <Text style={styles.statNumber}>{followingCount}</Text>
-                  <Text style={styles.statLabel}>Following</Text>
+                  <Text style={[styles.statNumber, { color: colors.text }]}>{followingCount}</Text>
+                  <Text style={[styles.statLabel, { color: colors.subtextAlt }]}>Following</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Bio section - sirf naam, tick nahi */}
             <View style={styles.bioSection}>
-              <Text style={styles.name}>{name}</Text>
-              {bio ? <Text style={styles.bio}>{bio}</Text> : null}
+              <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
+              {bio ? <Text style={[styles.bio, { color: colors.subtext }]}>{bio}</Text> : null}
             </View>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, { backgroundColor: colors.card, borderColor: colors.borderAlt }]}
                 onPress={() => router.push("/edit-profile")}
               >
-                <Text style={styles.editButtonText}>Edit Profile</Text>
+                <Text style={[styles.editButtonText, { color: colors.text }]}>Edit Profile</Text>
               </TouchableOpacity>
             </View>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No posts yet</Text>
+            <Text style={[styles.emptyText, { color: colors.subtextAlt }]}>No posts yet</Text>
           </View>
         }
       />
@@ -227,15 +227,15 @@ export default function Profile() {
 
       {/* Full post modal - jab grid image tap ho, saari posts scrollable */}
       <Modal visible={!!selectedPost} transparent={false} animationType="slide">
-        <SafeAreaView style={styles.fullPostContainer}>
-          <View style={styles.fullPostTopBar}>
+        <SafeAreaView style={[styles.fullPostContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.fullPostTopBar, { borderBottomColor: colors.border }]}>
             <TouchableOpacity
               onPress={() => setSelectedPost(null)}
-              style={styles.iconBtn}
+              style={[styles.iconBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
             >
-              <Ionicons name="close" size={20} color="#fff" />
+              <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text style={styles.fullPostTitle}>Posts</Text>
+            <Text style={[styles.fullPostTitle, { color: colors.text }]}>Posts</Text>
             <View style={{ width: 32 }} />
           </View>
 
@@ -244,24 +244,24 @@ export default function Profile() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 40 }}
             renderItem={({ item }) => (
-              <View style={styles.postCard}>
+              <View style={[styles.postCard, { borderBottomColor: colors.border }]}>
                 <View style={styles.postHeader}>
-                  <View style={styles.avatar}>
+                  <View style={[styles.avatar, { backgroundColor: colors.card }]}>
                     {profileImage ? (
                       <Image source={{ uri: profileImage }} style={styles.avatarImg} />
                     ) : (
-                      <Ionicons name="person" size={16} color="#666" />
+                      <Ionicons name="person" size={16} color={colors.subtextAlt} />
                     )}
                   </View>
 
                   <View style={styles.headerTextCol}>
                     <View style={styles.nameRow}>
-                      <Text style={styles.fullName} numberOfLines={1}>{name}</Text>
-                      <Text style={styles.handle} numberOfLines={1}>@{username}</Text>
+                      <Text style={[styles.fullName, { color: colors.text }]} numberOfLines={1}>{name}</Text>
+                      <Text style={[styles.handle, { color: colors.subtext }]} numberOfLines={1}>@{username}</Text>
                       {isVerified && <VerifiedBadge size={13} />}
                     </View>
                     {item.caption ? (
-                      <Text style={styles.caption}>{item.caption}</Text>
+                      <Text style={[styles.caption, { color: colors.text }]}>{item.caption}</Text>
                     ) : null}
                   </View>
 
@@ -270,11 +270,11 @@ export default function Profile() {
                     onPress={() => setMenuPostId(item.id)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="ellipsis-horizontal" size={18} color="#888" />
+                    <Ionicons name="ellipsis-horizontal" size={18} color={colors.subtext} />
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.imageWrapper}>
+                <View style={[styles.imageWrapper, { backgroundColor: colors.card, borderColor: colors.borderAlt }]}>
                   <Image
                     source={{ uri: item.image_url }}
                     style={styles.postImage}
@@ -284,16 +284,16 @@ export default function Profile() {
 
                 <View style={styles.actionRow}>
                   <TouchableOpacity style={styles.actionItem}>
-                    <Ionicons name="chatbubble-outline" size={16} color="#888" />
+                    <Ionicons name="chatbubble-outline" size={16} color={colors.subtext} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionItem}>
-                    <Ionicons name="repeat-outline" size={18} color="#888" />
+                    <Ionicons name="repeat-outline" size={18} color={colors.subtext} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionItem}>
-                    <Ionicons name="heart-outline" size={16} color="#888" />
+                    <Ionicons name="heart-outline" size={16} color={colors.subtext} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionItem}>
-                    <Ionicons name="share-outline" size={16} color="#888" />
+                    <Ionicons name="share-outline" size={16} color={colors.subtext} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -309,9 +309,9 @@ export default function Profile() {
           activeOpacity={1}
           onPress={() => setMenuPostId(null)}
         >
-          <View style={styles.menuBox}>
+          <View style={[styles.menuBox, { backgroundColor: colors.cardAlt }]}>
             <TouchableOpacity
-              style={styles.menuItem}
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => menuPostId && handleDeletePost(menuPostId)}
             >
               <Ionicons name="trash-outline" size={18} color="#ff3b30" />
@@ -321,7 +321,7 @@ export default function Profile() {
               style={styles.menuCancel}
               onPress={() => setMenuPostId(null)}
             >
-              <Text style={styles.menuCancelText}>Cancel</Text>
+              <Text style={[styles.menuCancelText, { color: colors.subtext }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -331,10 +331,9 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1 },
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -346,7 +345,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   topBarUsername: {
     flexDirection: "row",
@@ -354,16 +352,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600", textAlign: "center" },
+  title: { fontSize: 15, fontWeight: "600", textAlign: "center" },
   iconBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#222",
   },
   profileRow: {
     flexDirection: "row",
@@ -377,14 +373,13 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
   },
   statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
   statItem: { alignItems: "center" },
-  statNumber: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  statLabel: { color: "#666", fontSize: 11, marginTop: 2 },
+  statNumber: { fontSize: 16, fontWeight: "700" },
+  statLabel: { fontSize: 11, marginTop: 2 },
   bioSection: { paddingHorizontal: 16, marginBottom: 12 },
   nameRow: {
     flexDirection: "row",
@@ -392,34 +387,28 @@ const styles = StyleSheet.create({
     gap: 5,
     marginBottom: 4,
   },
-  name: { color: "#fff", fontSize: 13, fontWeight: "600" },
-  bio: { color: "#aaa", fontSize: 12, marginTop: 4, lineHeight: 18 },
+  name: { fontSize: 13, fontWeight: "600" },
+  bio: { fontSize: 12, marginTop: 4, lineHeight: 18 },
   buttonRow: { paddingHorizontal: 16, marginBottom: 12 },
   editButton: {
-    backgroundColor: "#1a1a1a",
     paddingVertical: 8,
     borderRadius: 8,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#333",
   },
-  editButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  editButtonText: { fontWeight: "600", fontSize: 13 },
 
-  // Grid styles
   gridItem: {
     width: GRID_ITEM_SIZE,
     height: GRID_ITEM_SIZE,
-    backgroundColor: "#0d0d0d",
   },
   gridImage: {
     width: "100%",
     height: "100%",
   },
 
-  // Full post modal styles
   fullPostContainer: {
     flex: 1,
-    backgroundColor: "#000",
   },
   fullPostTopBar: {
     flexDirection: "row",
@@ -428,10 +417,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   fullPostTitle: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "600",
   },
@@ -442,7 +429,6 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     marginBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
@@ -454,7 +440,6 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -465,9 +450,9 @@ const styles = StyleSheet.create({
     borderRadius: AVATAR_SIZE / 2,
   },
   headerTextCol: { flex: 1 },
-  fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
-  handle: { color: "#777", fontSize: 13, flexShrink: 1 },
-  caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
+  fullName: { fontWeight: "700", fontSize: 14, flexShrink: 1 },
+  handle: { fontSize: 13, flexShrink: 1 },
+  caption: { fontSize: 15, lineHeight: 20 },
   moreBtn: {
     padding: 4,
   },
@@ -477,9 +462,7 @@ const styles = StyleSheet.create({
     marginLeft: IMAGE_LEFT_INSET,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#0d0d0d",
     borderWidth: 1,
-    borderColor: "#262626",
   },
   postImage: { width: "100%", height: "100%" },
   actionRow: {
@@ -491,7 +474,7 @@ const styles = StyleSheet.create({
   },
   actionItem: { padding: 2 },
   emptyContainer: { paddingTop: 40, alignItems: "center" },
-  emptyText: { color: "#555", fontSize: 13 },
+  emptyText: { fontSize: 13 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.9)",
@@ -505,7 +488,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   menuBox: {
-    backgroundColor: "#111",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingBottom: 20,
@@ -518,7 +500,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#222",
   },
   menuItemDeleteText: {
     color: "#ff3b30",
@@ -530,7 +511,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   menuCancelText: {
-    color: "#888",
     fontSize: 14,
     fontWeight: "500",
   },

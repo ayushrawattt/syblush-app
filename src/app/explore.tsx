@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import VerifiedBadge from "../components/verified-badge";
+import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../lib/supabase";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -25,6 +26,7 @@ const POST_IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2 - IMAGE_LEFT_INSET;
 const POST_IMAGE_HEIGHT = Math.min(POST_IMAGE_WIDTH, 300);
 
 export default function Explore() {
+  const { colors } = useTheme();
   const [profileImage, setProfileImage] = useState(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [posts, setPosts] = useState([]);
@@ -67,7 +69,6 @@ export default function Explore() {
           } else {
             const postsWithExtras = await Promise.all(
               (postsData || []).map(async (post) => {
-                // is_verified bhi fetch karo
                 const { data: profile } = await supabase
                   .from("profiles")
                   .select("full_name, username, avatar_url, is_verified")
@@ -163,35 +164,34 @@ export default function Explore() {
   };
 
   const renderPost = ({ item }: any) => (
-    <View style={styles.postCard}>
+    <View style={[styles.postCard, { borderBottomColor: colors.border }]}>
       <View style={styles.postHeader}>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.cardAlt }]}>
           {item.profiles?.avatar_url ? (
             <Image source={{ uri: item.profiles.avatar_url }} style={styles.avatarImg} />
           ) : (
-            <Ionicons name="person" size={16} color="#666" />
+            <Ionicons name="person" size={16} color={colors.subtextAlt} />
           )}
         </View>
 
         <View style={styles.headerTextCol}>
           <View style={styles.nameRow}>
-            <Text style={styles.fullName} numberOfLines={1}>
+            <Text style={[styles.fullName, { color: colors.text }]} numberOfLines={1}>
               {item.profiles?.full_name || item.profiles?.username || "User"}
             </Text>
-            {/* Username ke baad blue tick */}
-            <Text style={styles.handle} numberOfLines={1}>
+            <Text style={[styles.handle, { color: colors.subtext }]} numberOfLines={1}>
               @{item.profiles?.username || "user"}
             </Text>
             {item.profiles?.is_verified && <VerifiedBadge size={13} />}
           </View>
 
           {item.caption ? (
-            <Text style={styles.caption}>{item.caption}</Text>
+            <Text style={[styles.caption, { color: colors.text }]}>{item.caption}</Text>
           ) : null}
         </View>
       </View>
 
-      <View style={styles.imageWrapper}>
+      <View style={[styles.imageWrapper, { backgroundColor: colors.card, borderColor: colors.borderAlt }]}>
         <Image
           source={{ uri: item.image_url }}
           style={styles.postImage}
@@ -205,7 +205,7 @@ export default function Explore() {
           onPress={() => router.push(`/post/${item.id}`)}
           activeOpacity={0.7}
         >
-          <Ionicons name="chatbubble-outline" size={16} color="#888" />
+          <Ionicons name="chatbubble-outline" size={16} color={colors.subtext} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionItem, styles.likeItem]}
@@ -215,10 +215,10 @@ export default function Explore() {
           <Ionicons
             name="repeat-outline"
             size={18}
-            color={item.repostedByMe ? "#00c853" : "#888"}
+            color={item.repostedByMe ? "#00c853" : colors.subtext}
           />
           {item.repostCount > 0 && (
-            <Text style={[styles.likeCount, item.repostedByMe && styles.repostCountActive]}>
+            <Text style={[styles.likeCount, { color: colors.subtext }, item.repostedByMe && styles.repostCountActive]}>
               {item.repostCount}
             </Text>
           )}
@@ -231,50 +231,50 @@ export default function Explore() {
           <Ionicons
             name={item.likedByMe ? "heart" : "heart-outline"}
             size={16}
-            color={item.likedByMe ? "#ff3b5c" : "#888"}
+            color={item.likedByMe ? "#ff3b5c" : colors.subtext}
           />
           {item.likeCount > 0 && (
-            <Text style={[styles.likeCount, item.likedByMe && styles.likeCountActive]}>
+            <Text style={[styles.likeCount, { color: colors.subtext }, item.likedByMe && styles.likeCountActive]}>
               {item.likeCount}
             </Text>
           )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="share-outline" size={16} color="#888" />
+          <Ionicons name="share-outline" size={16} color={colors.subtext} />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.topRow}>
         <TouchableOpacity
-          style={styles.iconButton}
+          style={[styles.iconButton, { backgroundColor: colors.iconBg, borderColor: colors.border }]}
           onPress={() => router.push("/create-post")}
           activeOpacity={0.7}
         >
-          <Ionicons name="add" size={18} color="#fff" />
+          <Ionicons name="add" size={18} color={colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.searchBar}
+          style={[styles.searchBar, { backgroundColor: colors.iconBg, borderColor: colors.border }]}
           onPress={() => router.push("/search")}
           activeOpacity={0.7}
         >
-          <Ionicons name="search" size={14} color="#888" />
-          <Text style={styles.searchBarText}>Search </Text>
+          <Ionicons name="search" size={14} color={colors.subtext} />
+          <Text style={[styles.searchBarText, { color: colors.subtext }]}>Search </Text>
         </TouchableOpacity>
 
         <View style={styles.topRowRight}>
           <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.iconButton, { backgroundColor: colors.iconBg, borderColor: colors.border }]}
             onPress={() => router.push("/notifications")}
             activeOpacity={0.7}
           >
-            <Ionicons name="notifications-outline" size={16} color="#fff" />
+            <Ionicons name="notifications-outline" size={16} color={colors.text} />
             {unreadNotifications > 0 && (
-              <View style={styles.badge}>
+              <View style={[styles.badge, { borderColor: colors.background }]}>
                 <Text style={styles.badgeText}>
                   {unreadNotifications > 9 ? "9+" : unreadNotifications}
                 </Text>
@@ -283,25 +283,25 @@ export default function Explore() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.iconButton, { backgroundColor: colors.iconBg, borderColor: colors.border }]}
             onPress={() => router.push("/messages")}
             activeOpacity={0.7}
           >
-            <Ionicons name="chatbubble-outline" size={16} color="#fff" />
+            <Ionicons name="chatbubble-outline" size={16} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.tabRow}>
+      <View style={[styles.tabRow, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.tabItem}
           onPress={() => setActiveTab("forYou")}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === "forYou" && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.subtext }, activeTab === "forYou" && { color: colors.text, fontWeight: "600" }]}>
             For you
           </Text>
-          {activeTab === "forYou" && <View style={styles.tabIndicator} />}
+          {activeTab === "forYou" && <View style={[styles.tabIndicator, { backgroundColor: colors.text }]} />}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -309,18 +309,18 @@ export default function Explore() {
           onPress={() => setActiveTab("following")}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === "following" && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.subtext }, activeTab === "following" && { color: colors.text, fontWeight: "600" }]}>
             Following
           </Text>
-          {activeTab === "following" && <View style={styles.tabIndicator} />}
+          {activeTab === "following" && <View style={[styles.tabIndicator, { backgroundColor: colors.text }]} />}
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#fff" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={colors.text} style={{ marginTop: 40 }} />
       ) : visiblePosts.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: colors.subtextAlt }]}>
             {activeTab === "following" ? "Follow people to see their posts" : "No posts yet"}
           </Text>
         </View>
@@ -340,7 +340,6 @@ export default function Explore() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
     paddingTop: 8,
   },
   topRow: {
@@ -360,9 +359,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#0d0d0d",
     borderWidth: 1,
-    borderColor: "#1e1e1e",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -378,7 +375,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 2,
     borderWidth: 1,
-    borderColor: "#000",
   },
   badgeText: {
     color: "#fff",
@@ -390,21 +386,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#0d0d0d",
     borderWidth: 1,
-    borderColor: "#1e1e1e",
     borderRadius: 18,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   searchBarText: {
-    color: "#888",
     fontSize: 13,
   },
   tabRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#1a1a1a",
     marginBottom: 4,
   },
   tabItem: {
@@ -413,20 +405,14 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   tabText: {
-    color: "#888",
     fontSize: 13,
     fontWeight: "500",
-  },
-  tabTextActive: {
-    color: "#fff",
-    fontWeight: "600",
   },
   tabIndicator: {
     marginTop: 6,
     width: 26,
     height: 2,
     borderRadius: 2,
-    backgroundColor: "#fff",
   },
   postCard: {
     paddingHorizontal: CARD_PADDING,
@@ -434,7 +420,6 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     marginBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
@@ -446,7 +431,6 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -466,18 +450,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   fullName: {
-    color: "#fff",
     fontWeight: "700",
     fontSize: 14,
     flexShrink: 1,
   },
   handle: {
-    color: "#777",
     fontSize: 13,
     flexShrink: 1,
   },
   caption: {
-    color: "#eee",
     fontSize: 15,
     lineHeight: 20,
   },
@@ -487,9 +468,7 @@ const styles = StyleSheet.create({
     marginLeft: IMAGE_LEFT_INSET,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#0d0d0d",
     borderWidth: 1,
-    borderColor: "#262626",
   },
   postImage: {
     width: "100%",
@@ -511,7 +490,6 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   likeCount: {
-    color: "#888",
     fontSize: 12,
     fontWeight: "500",
   },
@@ -527,7 +505,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "#444",
     fontSize: 13,
   },
 });
