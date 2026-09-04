@@ -7,6 +7,7 @@ import {
   Image,
   Modal,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -23,6 +24,9 @@ const IMAGE_LEFT_INSET = AVATAR_SIZE + HEADER_GAP;
 const POST_IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2 - IMAGE_LEFT_INSET;
 const POST_IMAGE_HEIGHT = Math.min(POST_IMAGE_WIDTH, 300);
 
+const GRID_GAP = 2;
+const GRID_ITEM_SIZE = (SCREEN_WIDTH - GRID_GAP * 2) / 3;
+
 export default function Profile() {
   const [name, setName] = useState("Ayush Rawat");
   const [username, setUsername] = useState("ayush");
@@ -35,6 +39,7 @@ export default function Profile() {
   const [postsCount, setPostsCount] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
   const [menuPostId, setMenuPostId] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
 
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -92,64 +97,18 @@ export default function Profile() {
     } else {
       setPosts((prev: any) => prev.filter((p: any) => p.id !== postId));
       setPostsCount((prev) => Math.max(0, prev - 1));
+      setSelectedPost(null);
     }
   };
 
-  const renderPost = ({ item }: any) => (
-    <View style={styles.postCard}>
-      <View style={styles.postHeader}>
-        <View style={styles.avatar}>
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.avatarImg} />
-          ) : (
-            <Ionicons name="person" size={16} color="#666" />
-          )}
-        </View>
-
-        <View style={styles.headerTextCol}>
-          <View style={styles.nameRow}>
-            <Text style={styles.fullName} numberOfLines={1}>{name}</Text>
-            {/* Post mein username ke baad tick */}
-            <Text style={styles.handle} numberOfLines={1}>@{username}</Text>
-            {isVerified && <VerifiedBadge size={13} />}
-          </View>
-          {item.caption ? (
-            <Text style={styles.caption}>{item.caption}</Text>
-          ) : null}
-        </View>
-
-        <TouchableOpacity
-          style={styles.moreBtn}
-          onPress={() => setMenuPostId(item.id)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="ellipsis-horizontal" size={18} color="#888" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.imageWrapper}>
-        <Image
-          source={{ uri: item.image_url }}
-          style={styles.postImage}
-          resizeMode="cover"
-        />
-      </View>
-
-      <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="chatbubble-outline" size={16} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="repeat-outline" size={18} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="heart-outline" size={16} color="#888" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem}>
-          <Ionicons name="share-outline" size={16} color="#888" />
-        </TouchableOpacity>
-      </View>
-    </View>
+  const renderGridItem = ({ item }: any) => (
+    <TouchableOpacity
+      style={styles.gridItem}
+      activeOpacity={0.8}
+      onPress={() => setSelectedPost(item)}
+    >
+      <Image source={{ uri: item.image_url }} style={styles.gridImage} resizeMode="cover" />
+    </TouchableOpacity>
   );
 
   return (
@@ -157,9 +116,12 @@ export default function Profile() {
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        renderItem={renderPost}
+        renderItem={renderGridItem}
+        numColumns={3}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80 }}
+        columnWrapperStyle={{ gap: GRID_GAP }}
+        ItemSeparatorComponent={() => <View style={{ height: GRID_GAP }} />}
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.topBar}>
@@ -249,6 +211,78 @@ export default function Profile() {
         </TouchableOpacity>
       </Modal>
 
+      {/* Full post modal - jab grid image tap ho */}
+      <Modal visible={!!selectedPost} transparent={false} animationType="slide">
+        <SafeAreaView style={styles.fullPostContainer}>
+          <View style={styles.fullPostTopBar}>
+            <TouchableOpacity
+              onPress={() => setSelectedPost(null)}
+              style={styles.iconBtn}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.fullPostTitle}>Post</Text>
+            <TouchableOpacity
+              onPress={() => selectedPost && setMenuPostId(selectedPost.id)}
+              style={styles.iconBtn}
+            >
+              <Ionicons name="ellipsis-horizontal" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {selectedPost && (
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+              <View style={styles.postCard}>
+                <View style={styles.postHeader}>
+                  <View style={styles.avatar}>
+                    {profileImage ? (
+                      <Image source={{ uri: profileImage }} style={styles.avatarImg} />
+                    ) : (
+                      <Ionicons name="person" size={16} color="#666" />
+                    )}
+                  </View>
+
+                  <View style={styles.headerTextCol}>
+                    <View style={styles.nameRow}>
+                      <Text style={styles.fullName} numberOfLines={1}>{name}</Text>
+                      <Text style={styles.handle} numberOfLines={1}>@{username}</Text>
+                      {isVerified && <VerifiedBadge size={13} />}
+                    </View>
+                    {selectedPost.caption ? (
+                      <Text style={styles.caption}>{selectedPost.caption}</Text>
+                    ) : null}
+                  </View>
+                </View>
+
+                <View style={styles.imageWrapper}>
+                  <Image
+                    source={{ uri: selectedPost.image_url }}
+                    style={styles.postImage}
+                    resizeMode="cover"
+                  />
+                </View>
+
+                <View style={styles.actionRow}>
+                  <TouchableOpacity style={styles.actionItem}>
+                    <Ionicons name="chatbubble-outline" size={16} color="#888" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionItem}>
+                    <Ionicons name="repeat-outline" size={18} color="#888" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionItem}>
+                    <Ionicons name="heart-outline" size={16} color="#888" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionItem}>
+                    <Ionicons name="share-outline" size={16} color="#888" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Delete menu */}
       <Modal visible={!!menuPostId} transparent={true} animationType="fade">
         <TouchableOpacity
           style={styles.menuOverlay}
@@ -344,13 +378,42 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   editButtonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+
+  // Grid styles
+  gridItem: {
+    width: GRID_ITEM_SIZE,
+    height: GRID_ITEM_SIZE,
+    backgroundColor: "#0d0d0d",
+  },
+  gridImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  // Full post modal styles
+  fullPostContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  fullPostTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#111",
+  },
+  fullPostTitle: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
   postCard: {
     paddingHorizontal: CARD_PADDING,
     paddingTop: 12,
     paddingBottom: 14,
-    marginBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: "#111",
   },
   postHeader: {
     flexDirection: "row",
@@ -376,9 +439,6 @@ const styles = StyleSheet.create({
   fullName: { color: "#fff", fontWeight: "700", fontSize: 14, flexShrink: 1 },
   handle: { color: "#777", fontSize: 13, flexShrink: 1 },
   caption: { color: "#eee", fontSize: 15, lineHeight: 20 },
-  moreBtn: {
-    padding: 4,
-  },
   imageWrapper: {
     width: POST_IMAGE_WIDTH,
     height: POST_IMAGE_HEIGHT,
