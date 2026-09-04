@@ -8,13 +8,6 @@ const HomeIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
-const SearchIcon = ({ active }: { active: boolean }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "#666"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-  </svg>
-);
-
 const MembershipIcon = ({ active }: { active: boolean }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? "#fff" : "none"} stroke={active ? "#fff" : "#666"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
@@ -35,7 +28,6 @@ export default function AppTabs() {
 
   const tabs = [
     { name: "Home", href: "/explore", match: "/explore", Icon: HomeIcon },
-    { name: "Search", href: "/search", match: "/search", Icon: SearchIcon },
     { name: "Membership", href: "/membership", match: "/membership", Icon: MembershipIcon },
     { name: "Profile", href: "/profile", match: "/profile", Icon: ProfileIcon },
   ];

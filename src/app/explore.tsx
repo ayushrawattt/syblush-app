@@ -257,7 +257,14 @@ export default function Explore() {
           <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.syblushTitle}>SYBLUSH</Text>
+        <TouchableOpacity
+          style={styles.searchBar}
+          onPress={() => router.push("/search")}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="search" size={14} color="#888" />
+          <Text style={styles.searchBarText}>Search Syblush</Text>
+        </TouchableOpacity>
 
         <View style={styles.topRowRight}>
           <TouchableOpacity
@@ -342,7 +349,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
     paddingHorizontal: 14,
-    position: "relative",
+    gap: 8,
   },
   topRowRight: {
     flexDirection: "row",
@@ -378,15 +385,21 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: "bold",
   },
-  syblushTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "800",
-    letterSpacing: 5,
-    textAlign: "center",
-    position: "absolute",
-    left: 0,
-    right: 0,
+  searchBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#0d0d0d",
+    borderWidth: 1,
+    borderColor: "#1e1e1e",
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchBarText: {
+    color: "#888",
+    fontSize: 13,
   },
   tabRow: {
     flexDirection: "row",
