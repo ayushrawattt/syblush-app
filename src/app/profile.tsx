@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -27,8 +28,8 @@ const GRID_GAP = 2;
 const GRID_ITEM_SIZE = (SCREEN_WIDTH - GRID_GAP * 2) / 3;
 
 export default function Profile() {
-  const [name, setName] = useState("Ayush Rawat");
-  const [username, setUsername] = useState("ayush");
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showImage, setShowImage] = useState(false);
@@ -39,10 +40,15 @@ export default function Profile() {
   const [isVerified, setIsVerified] = useState(false);
   const [menuPostId, setMenuPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const loadProfile = async () => {
+    setProfileLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setProfileLoading(false);
+      return;
+    }
 
     const { data } = await supabase
       .from("profiles")
@@ -51,9 +57,9 @@ export default function Profile() {
       .single();
 
     if (data) {
-      if (data.full_name) setName(data.full_name);
-      if (data.username) setUsername(data.username);
-      if (data.bio) setBio(data.bio);
+      setName(data.full_name || "");
+      setUsername(data.username || "");
+      setBio(data.bio || "");
       if (data.avatar_url) {
         setProfileImage(data.avatar_url + "?t=" + Date.now());
       } else {
@@ -83,6 +89,7 @@ export default function Profile() {
 
     setPosts(postsData || []);
     setPostsCount(postsData?.length ?? 0);
+    setProfileLoading(false);
   };
 
   useFocusEffect(useCallback(() => { loadProfile(); }, []));
@@ -109,6 +116,14 @@ export default function Profile() {
       <Image source={{ uri: item.image_url }} style={styles.gridImage} resizeMode="cover" />
     </TouchableOpacity>
   );
+
+  if (profileLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator color="#fff" size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -317,6 +332,12 @@ export default function Profile() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   header: { paddingTop: 8 },
   topBar: {
     flexDirection: "row",
